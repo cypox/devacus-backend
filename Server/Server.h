@@ -54,7 +54,7 @@ class Server
     {
         SimpleLogger().Write() << "http 1.1 compression handled by zlib version " << zlibVersion();
         const unsigned hardware_threads = std::max(1u, std::thread::hardware_concurrency());
-        const unsigned real_num_threads = std::min(hardware_threads, requested_num_threads);
+		const unsigned real_num_threads = std::min(hardware_threads, requested_num_threads);
         return std::make_shared<Server>(ip_address, ip_port, real_num_threads);
     }
 
@@ -65,7 +65,14 @@ class Server
         const std::string port_string = cast::integral_to_string(port);
 
         boost::asio::ip::tcp::resolver resolver(io_service);
-        boost::asio::ip::tcp::resolver::query query(address, port_string);
+		/*
+		Fix here : http://stackoverflow.com/questions/12542460/boost-asio-host-not-found-authorative
+		 * The problem was that the constructor for query has the address_configured flag set by default
+		 *  which won't return an address if the loopback device is the only device with an address.
+		 * By just settings flags to 0 or anything other than address_configured the problem is fixed.
+		boost::asio::ip::tcp::resolver::query query(address, port_string);
+		*/
+		boost::asio::ip::tcp::resolver::query query(address, port_string, boost::asio::ip::resolver_query_base::numeric_service);
         boost::asio::ip::tcp::endpoint endpoint = *resolver.resolve(query);
 
         acceptor.open(endpoint.protocol());

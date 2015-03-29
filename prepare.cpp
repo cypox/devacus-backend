@@ -31,23 +31,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int main(int argc, char *argv[])
 {
-    try
-    {
-        return Prepare().Process(argc, argv);
-    }
-    catch (boost::program_options::too_many_positional_options_error &)
-    {
-        SimpleLogger().Write(logWARNING) << "Only one file can be specified";
-        return 1;
-    }
-    catch (boost::program_options::error &e)
-    {
-        SimpleLogger().Write(logWARNING) << e.what();
-        return 1;
-    }
-    catch (const std::exception &e)
-    {
-        SimpleLogger().Write(logWARNING) << "Exception occured: " << e.what() << std::endl;
-        return 1;
-    }
+	try
+	{
+		return Prepare().Process(argc, argv);
+	}
+	catch (boost::program_options::too_many_positional_options_error &)
+	{
+		SimpleLogger().Write(logWARNING) << "Only one file can be specified";
+		return 1;
+	}
+	catch (boost::program_options::error &e)
+	{
+		SimpleLogger().Write(logWARNING) << e.what();
+		return 1;
+	}
+	catch (const std::exception &e)
+	{
+		SimpleLogger().Write(logWARNING) << "Exception occured: " << e.what() << std::endl;
+		return 1;
+	}
 }

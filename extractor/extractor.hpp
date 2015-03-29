@@ -8,6 +8,6 @@
 /** \brief Class of 'extract' utility. */
 struct Extractor
 {
-    int Run(int argc, char *argv[]);
+	int Run(int argc, char *argv[]);
 };
 #endif /* EXTRACTOR_HPP */

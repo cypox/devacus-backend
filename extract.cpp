@@ -30,13 +30,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int main (int argc, char *argv[])
 {
-    try
-    {
-        return Extractor().Run(argc, argv);
-    }
-    catch (const std::exception &e)
-    {
-        SimpleLogger().Write(logWARNING) << "[exception] " << e.what();
-    }
+	try
+	{
+		return Extractor().Run(argc, argv);
+	}
+	catch (const std::exception &e)
+	{
+		SimpleLogger().Write(logWARNING) << "[exception] " << e.what();
+	}
 
 }
