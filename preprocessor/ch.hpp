@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2014, Project OSRM, Dennis Luxen, others
+Copyright (c) 2014, Project DevacuS, Mohamed Neggaz, others
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -25,10 +25,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef PROCESSING_CHAIN_HPP
-#define PROCESSING_CHAIN_HPP
+#ifndef CH_HPP
+#define CH_HPP
 
-#include "edge_based_graph_factory.hpp"
+#include "preprocess.hpp"
+
+#include "../contractor/edge_based_graph_factory.hpp"
 #include "../data_structures/query_edge.hpp"
 #include "../data_structures/static_graph.hpp"
 
@@ -40,34 +42,22 @@ struct lua_State;
 
 #include <vector>
 
-/**
-	\brief class of 'prepare' utility.
- */
-class Prepare
+class CHPreprocess : Preprocess
 {
 public:
 	using EdgeData = QueryEdge::EdgeData;
 	using InputEdge = DynamicGraph<EdgeData>::InputEdge;
 	using StaticEdge = StaticGraph<EdgeData>::InputEdge;
 
-	explicit Prepare();
-	Prepare(const Prepare &) = delete;
-	~Prepare();
+	explicit CHPreprocess();
+	CHPreprocess(const CHPreprocess &) = delete;
+	~CHPreprocess();
 
-	int Process(int argc, char *argv[]);
+	int Run(int argc, char *argv[]);
 
 protected:
 	bool ParseArguments(int argc, char *argv[]);
 	void CheckRestrictionsFile(FingerPrint &fingerprint_orig);
-	bool SetupScriptingEnvironment(lua_State *myLuaState,
-								   EdgeBasedGraphFactory::SpeedProfileProperties &speed_profile);
-	std::size_t BuildEdgeExpandedGraph(lua_State *myLuaState,
-									   NodeID nodeBasedNodeNumber,
-									   std::vector<EdgeBasedNode> &nodeBasedEdgeList,
-									   DeallocatingVector<EdgeBasedEdge> &edgeBasedEdgeList,
-									   EdgeBasedGraphFactory::SpeedProfileProperties &speed_profile);
-	void WriteNodeMapping();
-	void BuildRTree(std::vector<EdgeBasedNode> &node_based_edge_list);
 
 private:
 	std::vector<QueryNode> internal_to_external_node_map;
@@ -91,7 +81,6 @@ private:
 	std::string rtree_nodes_path;
 	std::string rtree_leafs_path;
 
-	std::string expanded_graph_out;
 };
 
-#endif // PROCESSING_CHAIN_HPP
+#endif // CH_HPP

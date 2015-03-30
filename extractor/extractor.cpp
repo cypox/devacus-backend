@@ -201,10 +201,6 @@ int Extractor::Run(int argc, char *argv[])
 									boost::cref(static_cast<const osmium::Way &>(*entity)),
 									boost::ref(result_way));
 						resulting_ways.push_back(std::make_pair(x, result_way));
-						std::cout << "Name     : " << result_way.name << std::endl
-								  << "Fspeed   : " << result_way.forward_speed << std::endl
-								  << "BSpeed   : " << result_way.backward_speed << std::endl
-								  << "Duration : " << result_way.duration << std::endl;
 						break;
 					case osmium::item_type::relation:
 						++number_of_relations;

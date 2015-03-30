@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2015, Project OSRM, Dennis Luxen, others
+Copyright (c) 2015, Project DevacuS, Mohamed Neggaz, others
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -25,9 +25,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "processing_chain.hpp"
+#include "ch.hpp"
 
-#include "contractor.hpp"
+#include "../contractor/processing_chain.hpp"
+
+#include "../contractor/contractor.hpp"
 
 #include "../algorithms/crc32_processor.hpp"
 #include "../data_structures/deallocating_vector.hpp"
@@ -57,15 +59,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <thread>
 #include <vector>
 
-Prepare::Prepare() : requested_num_threads(1) {}
 
-Prepare::~Prepare() {}
+CHPreprocess::CHPreprocess() : requested_num_threads(1) {}
 
-int Prepare::Process(int argc, char *argv[])
+CHPreprocess::~CHPreprocess() {}
+
+int CHPreprocess::Run(int argc, char *argv[])
 {
 	LogPolicy::GetInstance().Unmute();
-	TIMER_START(preparing);
-	TIMER_START(expansion);
 
 	if (!ParseArguments(argc, argv))
 	{
@@ -118,21 +119,12 @@ int Prepare::Process(int argc, char *argv[])
 	rtree_nodes_path = input_path.string() + ".ramIndex";
 	rtree_leafs_path = input_path.string() + ".fileIndex";
 
-	expanded_graph_out = input_path.string() + ".expanded";
-
 	/*** Setup Scripting Environment ***/
 	// Create a new lua state
 	lua_State *lua_state = luaL_newstate();
 
 	// Connect LuaBind to this lua state
 	luabind::open(lua_state);
-
-	EdgeBasedGraphFactory::SpeedProfileProperties speed_profile;
-
-	if (!SetupScriptingEnvironment(lua_state, speed_profile))
-	{
-		return 1;
-	}
 
 #ifdef WIN32
 #pragma message("Memory consumption on Windows can be higher due to different bit packing")
@@ -162,7 +154,7 @@ int Prepare::Process(int argc, char *argv[])
 	std::vector<EdgeBasedNode> node_based_edge_list;
 	unsigned number_of_edge_based_nodes = 0;
 	DeallocatingVector<EdgeBasedEdge> edge_based_edge_list;
-
+/*
 	// init node_based_edge_list, edge_based_edge_list by edgeList
 	number_of_edge_based_nodes = BuildEdgeExpandedGraph(lua_state,
 														number_of_node_based_nodes,
@@ -170,10 +162,8 @@ int Prepare::Process(int argc, char *argv[])
 														edge_based_edge_list,
 														speed_profile);
 	lua_close(lua_state);
+*/
 
-	TIMER_STOP(expansion);
-
-	BuildRTree(node_based_edge_list);
 
 	RangebasedCRC32 crc32;
 	if (crc32.using_hardware())
@@ -190,72 +180,8 @@ int Prepare::Process(int argc, char *argv[])
 	node_based_edge_list.shrink_to_fit();
 	SimpleLogger().Write() << "CRC32: " << crc32_value;
 
-	WriteNodeMapping();
+	//WriteNodeMapping();
 
-	/*
-	boost::filesystem::ofstream expanded_graph_output_stream(expanded_graph_out, std::ios::binary);
-	const unsigned node_array_size = node_array.size();
-	// serialize crc32, aka checksum
-	expanded_graph_output_stream.write((char *)&crc32_value, sizeof(unsigned));
-	// serialize number of nodes
-	expanded_graph_output_stream.write((char *)&number_of_node_based_nodes, sizeof(unsigned));
-	// serialize number of edges
-	expanded_graph_output_stream.write((char *)&edge_based_edge_list.size(), sizeof(unsigned));
-
-	// serialize all edges
-
-	SimpleLogger().Write() << "Building edge array";
-	edge = 0;
-	int number_of_used_edges = 0;
-
-	StaticGraph<EdgeData>::EdgeArrayEntry current_edge;
-	for (const auto edge : osrm::irange<std::size_t>(0, contracted_edge_list.size()))
-	{
-		// no eigen loops
-		BOOST_ASSERT(contracted_edge_list[edge].source != contracted_edge_list[edge].target);
-		current_edge.target = contracted_edge_list[edge].target;
-		current_edge.data = contracted_edge_list[edge].data;
-
-		// every target needs to be valid
-		BOOST_ASSERT(current_edge.target < max_used_node_id);
-
-		expanded_graph_output_stream.write((char *)&current_edge,
-								 sizeof(StaticGraph<EdgeData>::EdgeArrayEntry));
-
-		++number_of_used_edges;
-	}
-	expanded_graph_output_stream.close();
-	*/
-
-	std::vector<ContractorEdge> edges;
-	edges.reserve(input_edge_list.size() * 2);
-	const auto dend = edge_based_edge_list.dend();
-	for (auto diter = edge_based_edge_list.dbegin(); diter != dend; ++diter)
-	{
-		BOOST_ASSERT_MSG(static_cast<unsigned int>(std::max(diter->weight, 1)) > 0, "edge distance < 1");
-#ifndef NDEBUG
-		if (static_cast<unsigned int>(std::max(diter->weight, 1)) > 24 * 60 * 60 * 10)
-		{
-			SimpleLogger().Write(logWARNING) << "Edge weight large -> "
-											 << static_cast<unsigned int>(std::max(diter->weight, 1));
-		}
-#endif
-		edges.emplace_back(diter->source, diter->target,
-						   static_cast<unsigned int>(std::max(diter->weight, 1)),
-						   1,
-						   diter->edge_id,
-						   false,
-						   diter->forward ? true : false,
-						   diter->backward ? true : false);
-
-		edges.emplace_back(diter->target, diter->source,
-						   static_cast<unsigned int>(std::max(diter->weight, 1)),
-						   1,
-						   diter->edge_id,
-						   false,
-						   diter->backward ? true : false,
-						   diter->forward ? true : false);
-	}
 
 	/***
 	 * Contracting the edge-expanded graph
@@ -380,29 +306,18 @@ int Prepare::Process(int argc, char *argv[])
 	}
 	hsgr_output_stream.close();
 
+	SimpleLogger().Write() << "Contraction: "
+						   << (number_of_edge_based_nodes / TIMER_SEC(contraction))
+						   << " nodes/sec and " << number_of_used_edges / TIMER_SEC(contraction)
+						   << " edges/sec";
+
 	node_array.clear();
-
-
-	TIMER_STOP(preparing);
-
-	SimpleLogger().Write() << "Preprocessing : " << TIMER_SEC(preparing) << " seconds";
-	SimpleLogger().Write() << "Expansion  : " << (number_of_node_based_nodes / TIMER_SEC(expansion))
-						   << " nodes/sec and "
-						   << (number_of_edge_based_nodes / TIMER_SEC(expansion)) << " edges/sec";
-
 	SimpleLogger().Write() << "finished preparing";
 
 	return 0;
 }
 
-/**
- \brief Parses command line arguments
- \param argc count of arguments
- \param argv array of arguments
- \param result [out] value for exit return value
- \return true if everything is ok, false if need to terminate execution
-*/
-bool Prepare::ParseArguments(int argc, char *argv[])
+bool CHPreprocess::ParseArguments(int argc, char *argv[])
 {
 	// declare a group of options that will be allowed only on command line
 	boost::program_options::options_description generic_options("Options");
@@ -493,10 +408,7 @@ bool Prepare::ParseArguments(int argc, char *argv[])
 	return true;
 }
 
-/**
- \brief Loads and checks file UUIDs
-*/
-void Prepare::CheckRestrictionsFile(FingerPrint &fingerprint_orig)
+void CHPreprocess::CheckRestrictionsFile(FingerPrint &fingerprint_orig)
 {
 	boost::filesystem::ifstream restriction_stream(restrictions_path, std::ios::binary);
 	FingerPrint fingerprint_loaded;
@@ -518,128 +430,4 @@ void Prepare::CheckRestrictionsFile(FingerPrint &fingerprint_orig)
 	restriction_stream.close();
 }
 
-/**
-	\brief Setups scripting environment (lua-scripting)
-	Also initializes speed profile.
-*/
-bool
-Prepare::SetupScriptingEnvironment(lua_State *lua_state,
-								   EdgeBasedGraphFactory::SpeedProfileProperties &speed_profile)
-{
-	// open utility libraries string library;
-	luaL_openlibs(lua_state);
 
-	// adjust lua load path
-	luaAddScriptFolderToLoadPath(lua_state, profile_path.string().c_str());
-
-	// Now call our function in a lua script
-	if (0 != luaL_dofile(lua_state, profile_path.string().c_str()))
-	{
-		std::cerr << lua_tostring(lua_state, -1) << " occured in scripting block" << std::endl;
-		return false;
-	}
-
-	if (0 != luaL_dostring(lua_state, "return traffic_signal_penalty\n"))
-	{
-		std::cerr << lua_tostring(lua_state, -1) << " occured in scripting block" << std::endl;
-		return false;
-	}
-	speed_profile.traffic_signal_penalty = 10 * lua_tointeger(lua_state, -1);
-	SimpleLogger().Write(logDEBUG)
-			<< "traffic_signal_penalty: " << speed_profile.traffic_signal_penalty;
-
-	if (0 != luaL_dostring(lua_state, "return u_turn_penalty\n"))
-	{
-		std::cerr << lua_tostring(lua_state, -1) << " occured in scripting block" << std::endl;
-		return false;
-	}
-
-	speed_profile.u_turn_penalty = 10 * lua_tointeger(lua_state, -1);
-	speed_profile.has_turn_penalty_function = lua_function_exists(lua_state, "turn_function");
-
-	return true;
-}
-
-/**
- \brief Building an edge-expanded graph from node-based input and turn restrictions
-*/
-std::size_t
-Prepare::BuildEdgeExpandedGraph(lua_State *lua_state,
-								NodeID number_of_node_based_nodes,
-								std::vector<EdgeBasedNode> &node_based_edge_list,
-								DeallocatingVector<EdgeBasedEdge> &edge_based_edge_list,
-								EdgeBasedGraphFactory::SpeedProfileProperties &speed_profile)
-{
-	SimpleLogger().Write() << "Generating edge-expanded graph representation";
-	std::shared_ptr<NodeBasedDynamicGraph> node_based_graph =
-			NodeBasedDynamicGraphFromImportEdges(number_of_node_based_nodes, edge_list);
-	std::unique_ptr<RestrictionMap> restriction_map = osrm::make_unique<RestrictionMap>(restriction_list);
-	std::shared_ptr<EdgeBasedGraphFactory> edge_based_graph_factory =
-			std::make_shared<EdgeBasedGraphFactory>(node_based_graph,
-													std::move(restriction_map),
-													barrier_node_list,
-													traffic_light_list,
-													internal_to_external_node_map,
-													speed_profile);
-	edge_list.clear();
-	edge_list.shrink_to_fit();
-
-	edge_based_graph_factory->Run(edge_out, geometry_filename, lua_state);
-
-	restriction_list.clear();
-	restriction_list.shrink_to_fit();
-	barrier_node_list.clear();
-	barrier_node_list.shrink_to_fit();
-	traffic_light_list.clear();
-	traffic_light_list.shrink_to_fit();
-
-	const std::size_t number_of_edge_based_nodes =
-			edge_based_graph_factory->GetNumberOfEdgeBasedNodes();
-
-	BOOST_ASSERT(number_of_edge_based_nodes != std::numeric_limits<unsigned>::max());
-#ifndef WIN32
-	static_assert(sizeof(EdgeBasedEdge) == 16,
-				  "changing ImportEdge type has influence on memory consumption!");
-#endif
-
-	edge_based_graph_factory->GetEdgeBasedEdges(edge_based_edge_list);
-	edge_based_graph_factory->GetEdgeBasedNodes(node_based_edge_list);
-
-	edge_based_graph_factory.reset();
-	node_based_graph.reset();
-
-	return number_of_edge_based_nodes;
-}
-
-/**
-  \brief Writing info on original (node-based) nodes
- */
-void Prepare::WriteNodeMapping()
-{
-	SimpleLogger().Write() << "writing node map ...";
-	boost::filesystem::ofstream node_stream(node_filename, std::ios::binary);
-	const unsigned size_of_mapping = internal_to_external_node_map.size();
-	node_stream.write((char *)&size_of_mapping, sizeof(unsigned));
-	if (size_of_mapping > 0)
-	{
-		node_stream.write((char *)&(internal_to_external_node_map[0]),
-				size_of_mapping * sizeof(QueryNode));
-	}
-	node_stream.close();
-	internal_to_external_node_map.clear();
-	internal_to_external_node_map.shrink_to_fit();
-}
-
-/**
-	\brief Building rtree-based nearest-neighbor data structure
-
-	Saves info to files: '.ramIndex' and '.fileIndex'.
- */
-void Prepare::BuildRTree(std::vector<EdgeBasedNode> &node_based_edge_list)
-{
-	SimpleLogger().Write() << "building r-tree ...";
-	StaticRTree<EdgeBasedNode>(node_based_edge_list,
-							   rtree_nodes_path.c_str(),
-							   rtree_leafs_path.c_str(),
-							   internal_to_external_node_map);
-}
