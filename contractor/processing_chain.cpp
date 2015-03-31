@@ -192,10 +192,6 @@ int Prepare::Process(int argc, char *argv[])
 
 	WriteNodeMapping();
 
-
-
-
-
 	// Storing edges in vector in preparation for preprocessing
 	std::vector<EdgeContainer> edges;
 	edges.reserve(edge_based_edge_list.size() * 2);
@@ -216,26 +212,31 @@ int Prepare::Process(int argc, char *argv[])
 
 	//saving to file
 	boost::filesystem::ofstream expanded_graph_output_stream(expanded_graph_out, std::ios::binary);
+	//writing crc
+	expanded_graph_output_stream.write((char *)&crc32_value, sizeof(unsigned));
 	//number of nodes
 	expanded_graph_output_stream.write((char *)&number_of_node_based_nodes, sizeof(unsigned));
 	//number of edges
-	expanded_graph_output_stream.write((char *)edges.size(), sizeof(unsigned));
+	unsigned nedges = edges.size();
+	expanded_graph_output_stream.write((char *)&nedges, sizeof(unsigned));
 	//serializing edges
+	EdgeContainer tmp_edge;
 	const auto edge_iter_end = edges.cend();
 	for ( auto edge_iter = edges.begin() ; edge_iter != edge_iter_end ; ++ edge_iter )
 	{
-		expanded_graph_output_stream.write((char *)&edge_iter->source, sizeof(unsigned));
-		expanded_graph_output_stream.write((char *)&edge_iter->target, sizeof(unsigned));
-		expanded_graph_output_stream.write((char *)&edge_iter->distance, sizeof(unsigned));
-		expanded_graph_output_stream.write((char *)&edge_iter->id, sizeof(unsigned));
-		expanded_graph_output_stream.write((char *)edge_iter->forward, sizeof(bool));
-		expanded_graph_output_stream.write((char *)edge_iter->backward, sizeof(bool));
+		tmp_edge.source = edge_iter->source;
+		tmp_edge.target = edge_iter->target;
+		tmp_edge.distance = edge_iter->distance;
+		tmp_edge.id = edge_iter->id;
+		tmp_edge.forward = edge_iter->forward;
+		tmp_edge.backward = edge_iter->backward;
+		expanded_graph_output_stream.write((char *)&tmp_edge, sizeof(EdgeContainer));
 	}
 	expanded_graph_output_stream.close();
 
 
 
-
+/*
 	// restoring edges for preprocessing
 
 	DeallocatingVector<EdgeBasedEdge> restored_edge_based_edge_list;
@@ -251,10 +252,7 @@ int Prepare::Process(int argc, char *argv[])
 														  drestiter->backward));
 	}
 
-
-	/***
-	 * Contracting the edge-expanded graph
-	 */
+	// Contracting the edge-expanded graph
 
 	SimpleLogger().Write() << "initializing contractor";
 	auto contractor =
@@ -270,9 +268,8 @@ int Prepare::Process(int argc, char *argv[])
 	contractor->GetEdges(contracted_edge_list);
 	contractor.reset();
 
-	/***
-	 * Sorting contracted edges in a way that the static query graph can read some in in-place.
-	 */
+	// Sorting contracted edges in a way that the static query graph can read some in in-place.
+
 
 	tbb::parallel_sort(contracted_edge_list.begin(), contracted_edge_list.end());
 	const unsigned contracted_edge_count = contracted_edge_list.size();
@@ -376,7 +373,7 @@ int Prepare::Process(int argc, char *argv[])
 	hsgr_output_stream.close();
 
 	node_array.clear();
-
+*/
 
 	TIMER_STOP(preparing);
 

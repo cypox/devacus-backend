@@ -110,8 +110,6 @@ int CHPreprocess::Run(int argc, char *argv[])
 	FingerPrint fingerprint_orig;
 	CheckRestrictionsFile(fingerprint_orig);
 
-	boost::filesystem::ifstream input_stream(input_path, std::ios::in | std::ios::binary);
-
 	node_filename = input_path.string() + ".nodes";
 	edge_out = input_path.string() + ".edges";
 	geometry_filename = input_path.string() + ".geometry";
@@ -119,69 +117,45 @@ int CHPreprocess::Run(int argc, char *argv[])
 	rtree_nodes_path = input_path.string() + ".ramIndex";
 	rtree_leafs_path = input_path.string() + ".fileIndex";
 
-	/*** Setup Scripting Environment ***/
-	// Create a new lua state
-	lua_State *lua_state = luaL_newstate();
+	expanded_graph_out = input_path.string() + ".expanded";
 
-	// Connect LuaBind to this lua state
-	luabind::open(lua_state);
 
-#ifdef WIN32
-#pragma message("Memory consumption on Windows can be higher due to different bit packing")
-#else
-	static_assert(sizeof(ImportEdge) == 20,
-				  "changing ImportEdge type has influence on memory consumption!");
-#endif
-	//NodeID number_of_node_based_nodes =
-			readBinaryOSRMGraphFromStream(input_stream,
-										  edge_list,
-										  barrier_node_list,
-										  traffic_light_list,
-										  &internal_to_external_node_map,
-										  restriction_list);
-	input_stream.close();
+	//Restoring edge-expanded graph from file
+	boost::filesystem::ifstream expanded_graph_stream(expanded_graph_out, std::ios::in | std::ios::binary);
 
-	if (edge_list.empty())
-	{
-		SimpleLogger().Write(logWARNING) << "The input data is empty, exiting.";
-		return 1;
-	}
-
-	SimpleLogger().Write() << restriction_list.size() << " restrictions, "
-						   << barrier_node_list.size() << " bollard nodes, "
-						   << traffic_light_list.size() << " traffic lights";
-
-	std::vector<EdgeBasedNode> node_based_edge_list;
+	//std::vector<EdgeBasedNode> node_based_edge_list;
 	unsigned number_of_edge_based_nodes = 0;
-	DeallocatingVector<EdgeBasedEdge> edge_based_edge_list;
-/*
-	// init node_based_edge_list, edge_based_edge_list by edgeList
-	number_of_edge_based_nodes = BuildEdgeExpandedGraph(lua_state,
-														number_of_node_based_nodes,
-														node_based_edge_list,
-														edge_based_edge_list,
-														speed_profile);
-	lua_close(lua_state);
-*/
+	unsigned nedges = 0;
+	unsigned crc32_value;
+	std::vector<EdgeContainer> edges;
 
-
-	RangebasedCRC32 crc32;
-	if (crc32.using_hardware())
+	//reading crc32
+	expanded_graph_stream.read((char *)&crc32_value, sizeof(unsigned));
+	//raeding input file
+	expanded_graph_stream.read((char *)&number_of_edge_based_nodes, sizeof(unsigned));
+	//number of edges
+	expanded_graph_stream.read((char *)&nedges, sizeof(unsigned));
+	//reading edges
+	EdgeContainer tmp_edge;
+	for ( unsigned i = 0; i < nedges ; ++ i )
 	{
-		SimpleLogger().Write() << "using hardware based CRC32 computation";
+		expanded_graph_stream.read((char *)&tmp_edge, sizeof(EdgeContainer));
+		edges.emplace_back(tmp_edge);
 	}
-	else
+	expanded_graph_stream.close();
+
+	DeallocatingVector<EdgeBasedEdge> restored_edge_based_edge_list;
+	restored_edge_based_edge_list.clear();
+	const auto drestend = edges.cend();
+	for (auto drestiter = edges.cbegin(); drestiter != drestend; ++drestiter)
 	{
-		SimpleLogger().Write() << "using software based CRC32 computation";
+		restored_edge_based_edge_list.emplace_back(EdgeBasedEdge(drestiter->source,
+														  drestiter->target,
+														  drestiter->id,
+														  drestiter->distance,
+														  drestiter->forward,
+														  drestiter->backward));
 	}
-
-	const unsigned crc32_value = crc32(node_based_edge_list);
-	node_based_edge_list.clear();
-	node_based_edge_list.shrink_to_fit();
-	SimpleLogger().Write() << "CRC32: " << crc32_value;
-
-	//WriteNodeMapping();
-
 
 	/***
 	 * Contracting the edge-expanded graph
@@ -189,7 +163,7 @@ int CHPreprocess::Run(int argc, char *argv[])
 
 	SimpleLogger().Write() << "initializing contractor";
 	auto contractor =
-			osrm::make_unique<Contractor>(number_of_edge_based_nodes, edge_based_edge_list);
+			osrm::make_unique<Contractor>(number_of_edge_based_nodes, restored_edge_based_edge_list);
 
 	TIMER_START(contraction);
 	contractor->Run();
@@ -312,7 +286,7 @@ int CHPreprocess::Run(int argc, char *argv[])
 						   << " edges/sec";
 
 	node_array.clear();
-	SimpleLogger().Write() << "finished preparing";
+	SimpleLogger().Write() << "finished preprocessing";
 
 	return 0;
 }

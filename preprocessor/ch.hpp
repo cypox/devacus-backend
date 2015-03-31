@@ -44,6 +44,36 @@ struct lua_State;
 
 class CHPreprocess : Preprocess
 {
+	struct EdgeContainer
+	{
+		EdgeContainer()
+			: source(0), target(0), distance(0), id(0), originalEdges(0), shortcut(0), forward(0), backward(0),
+			  is_original_via_node_ID(false)
+		{
+		}
+		EdgeContainer(unsigned source,
+					  unsigned target,
+					  unsigned distance,
+					  unsigned original_edges,
+					  unsigned id,
+					  bool shortcut,
+					  bool forward,
+					  bool backward)
+			: source(source), target(target), distance(distance), id(id),
+			  originalEdges(std::min((unsigned)1 << 28, original_edges)), shortcut(shortcut),
+			  forward(forward), backward(backward), is_original_via_node_ID(false)
+		{
+		}
+		unsigned source;
+		unsigned target;
+		unsigned distance;
+		unsigned id;
+		unsigned originalEdges : 28;
+		bool shortcut : 1;
+		bool forward : 1;
+		bool backward : 1;
+		bool is_original_via_node_ID : 1;
+	};
 public:
 	using EdgeData = QueryEdge::EdgeData;
 	using InputEdge = DynamicGraph<EdgeData>::InputEdge;
@@ -81,6 +111,7 @@ private:
 	std::string rtree_nodes_path;
 	std::string rtree_leafs_path;
 
+	std::string expanded_graph_out;
 };
 
 #endif // CH_HPP
