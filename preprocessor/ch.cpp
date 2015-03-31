@@ -132,7 +132,7 @@ int CHPreprocess::Run(int argc, char *argv[])
 	static_assert(sizeof(ImportEdge) == 20,
 				  "changing ImportEdge type has influence on memory consumption!");
 #endif
-	NodeID number_of_node_based_nodes =
+	//NodeID number_of_node_based_nodes =
 			readBinaryOSRMGraphFromStream(input_stream,
 										  edge_list,
 										  barrier_node_list,
