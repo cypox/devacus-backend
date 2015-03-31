@@ -213,9 +213,15 @@ int Prepare::Process(int argc, char *argv[])
 	}
 	edges.shrink_to_fit();
 
-	/*
+
 	//saving to file
 	boost::filesystem::ofstream expanded_graph_output_stream(expanded_graph_out, std::ios::binary);
+	//number of nodes
+	expanded_graph_output_stream.write((char *)&number_of_node_based_nodes, sizeof(unsigned));
+	//number of edges
+	expanded_graph_output_stream.write((char *)&edges.size(), sizeof(unsigned));
+
+	/*
 	// serialize crc32, aka checksum
 	expanded_graph_output_stream.write((char *)&crc32_value, sizeof(unsigned));
 	// serialize number of nodes
