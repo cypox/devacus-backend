@@ -45,16 +45,16 @@ env:
  - CMAKEOPTIONS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-4.8" OSRM_PORT=5000 OSRM_TIMEOUT=60
  - CMAKEOPTIONS="-DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++-4.8" OSRM_PORT=5010 OSRM_TIMEOUT=60
 notifications:
- irc:
-  channels:
-    - irc.oftc.net#osrm
-  on_success: change
-  on_failure: always
-  use_notice: true
-  skip_join: false
+# irc:
+#  channels:
+#    - irc.oftc.net#osrm
+#  on_success: change
+#  on_failure: always
+#  use_notice: true
+#  skip_join: false
 
   recipients:
-    - dennis@mapbox.com
+    - am_neggaz@esi.dz
   email:
     on_success: change
     on_failure: always
