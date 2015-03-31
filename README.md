@@ -1,16 +1,14 @@
 # Readme
 
-For instructions on how to compile and run OSRM, please consult the Wiki at
+For any help on compiling/building or starting the machine contact me at : am\_neggaz@esi.dz.
 
-https://github.com/Project-OSRM/osrm-backend/wiki
+A wiki will be created after the first version of the project released.
 
-or use our free and daily updated online service at
-
-http://map.project-osrm.org
+For further help or documentation check the original project : https://github.com/Project-OSRM/osrm-backend
 
 ## References in publications
 
-When using the code in a (scientific) publication, please cite
+When using the code in a (scientific) publication, please cite the original authors (Dennis Luxen and Vetter Christian).
 
 ```
 @inproceedings{luxen-vetter-2011,
@@ -35,7 +33,5 @@ When using the code in a (scientific) publication, please cite
 
 | build config |  branch | status |
 |:-------------|:--------|:------------|
-| Linux        | master  | [![Build Status](https://travis-ci.org/Project-OSRM/osrm-backend.png?branch=master)](https://travis-ci.org/DennisOSRM/Project-OSRM) |
-| Linux        | develop | [![Build Status](https://travis-ci.org/Project-OSRM/osrm-backend.png?branch=develop)](https://travis-ci.org/DennisOSRM/Project-OSRM) |
-| Windows      | master/develop | [![Build status](https://ci.appveyor.com/api/projects/status/4iuo3s9gxprmcjjh)](https://ci.appveyor.com/project/DennisOSRM/osrm-backend) |
-| LUAbind fork | master  | [![Build Status](https://travis-ci.org/DennisOSRM/luabind.png?branch=master)](https://travis-ci.org/DennisOSRM/luabind) |
+| Linux        | master  | [![Build Status](https://travis-ci.org/cypox/devacus-backend.png?branch=master)](https://travis-ci.org/DennisOSRM/Project-OSRM) |
+| Linux        | develop | [![Build Status](https://travis-ci.org/cypox/devacus-backend.png?branch=develop)](https://travis-ci.org/DennisOSRM/Project-OSRM) |
