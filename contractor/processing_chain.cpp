@@ -216,7 +216,6 @@ int Prepare::Process(int argc, char *argv[])
 	/*
 	//saving to file
 	boost::filesystem::ofstream expanded_graph_output_stream(expanded_graph_out, std::ios::binary);
-	const unsigned node_array_size = node_array.size();
 	// serialize crc32, aka checksum
 	expanded_graph_output_stream.write((char *)&crc32_value, sizeof(unsigned));
 	// serialize number of nodes
@@ -266,8 +265,6 @@ int Prepare::Process(int argc, char *argv[])
 														  drestiter->forward,
 														  drestiter->backward));
 	}
-
-
 
 
 	/***

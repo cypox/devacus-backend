@@ -49,142 +49,142 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 template <class DataFacadeT> class ViaRoutePlugin final : public BasePlugin
 {
-  private:
-    DescriptorTable descriptor_table;
-    std::string descriptor_string;
-    std::unique_ptr<SearchEngine<DataFacadeT>> search_engine_ptr;
-    DataFacadeT *facade;
+private:
+	DescriptorTable descriptor_table;
+	std::string descriptor_string;
+	std::unique_ptr<SearchEngine<DataFacadeT>> search_engine_ptr;
+	DataFacadeT *facade;
 
-  public:
-    explicit ViaRoutePlugin(DataFacadeT *facade) : descriptor_string("viaroute"), facade(facade)
-    {
-        search_engine_ptr = osrm::make_unique<SearchEngine<DataFacadeT>>(facade);
+public:
+	explicit ViaRoutePlugin(DataFacadeT *facade) : descriptor_string("viaroute"), facade(facade)
+	{
+		search_engine_ptr = osrm::make_unique<SearchEngine<DataFacadeT>>(facade);
 
-        descriptor_table.emplace("json", 0);
-        descriptor_table.emplace("gpx", 1);
-        // descriptor_table.emplace("geojson", 2);
-    }
+		descriptor_table.emplace("json", 0);
+		descriptor_table.emplace("gpx", 1);
+		// descriptor_table.emplace("geojson", 2);
+	}
 
-    virtual ~ViaRoutePlugin() {}
+	virtual ~ViaRoutePlugin() {}
 
-    const std::string GetDescriptor() const final { return descriptor_string; }
+	const std::string GetDescriptor() const final { return descriptor_string; }
 
-    void HandleRequest(const RouteParameters &route_parameters, http::Reply &reply) final
-    {
-        if (!check_all_coordinates(route_parameters.coordinates))
-        {
-            reply = http::Reply::StockReply(http::Reply::badRequest);
-            return;
-        }
-        reply.status = http::Reply::ok;
+	void HandleRequest(const RouteParameters &route_parameters, http::Reply &reply) final
+	{
+		if (!check_all_coordinates(route_parameters.coordinates))
+		{
+			reply = http::Reply::StockReply(http::Reply::badRequest);
+			return;
+		}
+		reply.status = http::Reply::ok;
 
-        std::vector<phantom_node_pair> phantom_node_pair_list(route_parameters.coordinates.size());
-        const bool checksum_OK = (route_parameters.check_sum == facade->GetCheckSum());
+		std::vector<phantom_node_pair> phantom_node_pair_list(route_parameters.coordinates.size());
+		const bool checksum_OK = (route_parameters.check_sum == facade->GetCheckSum());
 
-        for (const auto i : osrm::irange<std::size_t>(0, route_parameters.coordinates.size()))
-        {
-            if (checksum_OK && i < route_parameters.hints.size() &&
-                !route_parameters.hints[i].empty())
-            {
-                ObjectEncoder::DecodeFromBase64(route_parameters.hints[i],
-                                                phantom_node_pair_list[i]);
-                if (phantom_node_pair_list[i].first.is_valid(facade->GetNumberOfNodes()))
-                {
-                    continue;
-                }
-            }
-            std::vector<PhantomNode> phantom_node_vector;
-            if (facade->IncrementalFindPhantomNodeForCoordinate(route_parameters.coordinates[i],
-                                                                phantom_node_vector, 1))
-            {
-                BOOST_ASSERT(!phantom_node_vector.empty());
-                phantom_node_pair_list[i].first = phantom_node_vector.front();
-                if (phantom_node_vector.size() > 1)
-                {
-                    phantom_node_pair_list[i].second = phantom_node_vector.back();
-                }
-            }
-        }
+		for (const auto i : osrm::irange<std::size_t>(0, route_parameters.coordinates.size()))
+		{
+			if (checksum_OK && i < route_parameters.hints.size() &&
+					!route_parameters.hints[i].empty())
+			{
+				ObjectEncoder::DecodeFromBase64(route_parameters.hints[i],
+												phantom_node_pair_list[i]);
+				if (phantom_node_pair_list[i].first.is_valid(facade->GetNumberOfNodes()))
+				{
+					continue;
+				}
+			}
+			std::vector<PhantomNode> phantom_node_vector;
+			if (facade->IncrementalFindPhantomNodeForCoordinate(route_parameters.coordinates[i],
+																phantom_node_vector, 1))
+			{
+				BOOST_ASSERT(!phantom_node_vector.empty());
+				phantom_node_pair_list[i].first = phantom_node_vector.front();
+				if (phantom_node_vector.size() > 1)
+				{
+					phantom_node_pair_list[i].second = phantom_node_vector.back();
+				}
+			}
+		}
 
-        auto check_component_id_is_tiny = [](const phantom_node_pair &phantom_pair)
-        {
-            return phantom_pair.first.component_id != 0;
-        };
+		auto check_component_id_is_tiny = [](const phantom_node_pair &phantom_pair)
+		{
+			return phantom_pair.first.component_id != 0;
+		};
 
-        const bool every_phantom_is_in_tiny_cc =
-            std::all_of(std::begin(phantom_node_pair_list), std::end(phantom_node_pair_list),
-                        check_component_id_is_tiny);
+		const bool every_phantom_is_in_tiny_cc =
+				std::all_of(std::begin(phantom_node_pair_list), std::end(phantom_node_pair_list),
+							check_component_id_is_tiny);
 
-        // are all phantoms from a tiny cc?
-        const auto component_id = phantom_node_pair_list.front().first.component_id;
+		// are all phantoms from a tiny cc?
+		const auto component_id = phantom_node_pair_list.front().first.component_id;
 
-        auto check_component_id_is_equal = [component_id](const phantom_node_pair &phantom_pair)
-        {
-            return component_id == phantom_pair.first.component_id;
-        };
+		auto check_component_id_is_equal = [component_id](const phantom_node_pair &phantom_pair)
+		{
+			return component_id == phantom_pair.first.component_id;
+		};
 
-        const bool every_phantom_has_equal_id =
-            std::all_of(std::begin(phantom_node_pair_list), std::end(phantom_node_pair_list),
-                        check_component_id_is_equal);
+		const bool every_phantom_has_equal_id =
+				std::all_of(std::begin(phantom_node_pair_list), std::end(phantom_node_pair_list),
+							check_component_id_is_equal);
 
-        auto swap_phantom_from_big_cc_into_front = [](phantom_node_pair &phantom_pair)
-        {
-            if (0 != phantom_pair.first.component_id)
-            {
-                using namespace std;
-                swap(phantom_pair.first, phantom_pair.second);
-            }
-        };
+		auto swap_phantom_from_big_cc_into_front = [](phantom_node_pair &phantom_pair)
+		{
+			if (0 != phantom_pair.first.component_id)
+			{
+				using namespace std;
+				swap(phantom_pair.first, phantom_pair.second);
+			}
+		};
 
-        // this case is true if we take phantoms from the big CC
-        if (!every_phantom_is_in_tiny_cc || !every_phantom_has_equal_id)
-        {
-            std::for_each(std::begin(phantom_node_pair_list), std::end(phantom_node_pair_list),
-                          swap_phantom_from_big_cc_into_front);
-        }
+		// this case is true if we take phantoms from the big CC
+		if (!every_phantom_is_in_tiny_cc || !every_phantom_has_equal_id)
+		{
+			std::for_each(std::begin(phantom_node_pair_list), std::end(phantom_node_pair_list),
+						  swap_phantom_from_big_cc_into_front);
+		}
 
-        RawRouteData raw_route;
-        auto build_phantom_pairs =
-            [&raw_route](const phantom_node_pair &first_pair, const phantom_node_pair &second_pair)
-        {
-            raw_route.segment_end_coordinates.emplace_back(
-                PhantomNodes{first_pair.first, second_pair.first});
-        };
-        osrm::for_each_pair(phantom_node_pair_list, build_phantom_pairs);
+		RawRouteData raw_route;
+		auto build_phantom_pairs =
+				[&raw_route](const phantom_node_pair &first_pair, const phantom_node_pair &second_pair)
+		{
+			raw_route.segment_end_coordinates.emplace_back(
+						PhantomNodes{first_pair.first, second_pair.first});
+		};
+		osrm::for_each_pair(phantom_node_pair_list, build_phantom_pairs);
 
-        if (route_parameters.alternate_route && 1 == raw_route.segment_end_coordinates.size())
-        {
-            search_engine_ptr->alternative_path(raw_route.segment_end_coordinates.front(),
-                                                raw_route);
-        }
-        else
-        {
-            search_engine_ptr->shortest_path(raw_route.segment_end_coordinates,
-                                             route_parameters.uturns, raw_route);
-        }
+		if (route_parameters.alternate_route && 1 == raw_route.segment_end_coordinates.size())
+		{
+			search_engine_ptr->alternative_path(raw_route.segment_end_coordinates.front(),
+												raw_route);
+		}
+		else
+		{
+			search_engine_ptr->shortest_path(raw_route.segment_end_coordinates,
+											 route_parameters.uturns, raw_route);
+		}
 
-        if (INVALID_EDGE_WEIGHT == raw_route.shortest_path_length)
-        {
-            SimpleLogger().Write(logDEBUG) << "Error occurred, single path not found";
-        }
+		if (INVALID_EDGE_WEIGHT == raw_route.shortest_path_length)
+		{
+			SimpleLogger().Write(logDEBUG) << "Error occurred, single path not found";
+		}
 
-        std::unique_ptr<BaseDescriptor<DataFacadeT>> descriptor;
-        switch (descriptor_table.get_id(route_parameters.output_format))
-        {
-        case 1:
-            descriptor = osrm::make_unique<GPXDescriptor<DataFacadeT>>(facade);
-            break;
-        // case 2:
-        //      descriptor = osrm::make_unique<GEOJSONDescriptor<DataFacadeT>>();
-        //      break;
-        default:
-            descriptor = osrm::make_unique<JSONDescriptor<DataFacadeT>>(facade);
-            break;
-        }
+		std::unique_ptr<BaseDescriptor<DataFacadeT>> descriptor;
+		switch (descriptor_table.get_id(route_parameters.output_format))
+		{
+		case 1:
+			descriptor = osrm::make_unique<GPXDescriptor<DataFacadeT>>(facade);
+			break;
+			// case 2:
+			//      descriptor = osrm::make_unique<GEOJSONDescriptor<DataFacadeT>>();
+			//      break;
+		default:
+			descriptor = osrm::make_unique<JSONDescriptor<DataFacadeT>>(facade);
+			break;
+		}
 
-        descriptor->SetConfig(route_parameters);
-        descriptor->Run(raw_route, reply);
-    }
+		descriptor->SetConfig(route_parameters);
+		descriptor->Run(raw_route, reply);
+	}
 };
 
 #endif // VIA_ROUTE_HPP

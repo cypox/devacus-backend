@@ -45,22 +45,22 @@ template <class EdgeDataT> class BaseDataFacade;
 
 class OSRM_impl
 {
-  private:
-    using PluginMap = std::unordered_map<std::string, BasePlugin *>;
+private:
+	using PluginMap = std::unordered_map<std::string, BasePlugin *>;
 
-  public:
-    OSRM_impl(ServerPaths paths, const bool use_shared_memory);
-    OSRM_impl(const OSRM_impl &) = delete;
-    virtual ~OSRM_impl();
-    void RunQuery(RouteParameters &route_parameters, http::Reply &reply);
+public:
+	OSRM_impl(ServerPaths paths, const bool use_shared_memory);
+	OSRM_impl(const OSRM_impl &) = delete;
+	virtual ~OSRM_impl();
+	void RunQuery(RouteParameters &route_parameters, http::Reply &reply);
 
-  private:
-    void RegisterPlugin(BasePlugin *plugin);
-    PluginMap plugin_map;
-    // will only be initialized if shared memory is used
-    std::unique_ptr<SharedBarriers> barrier;
-    // base class pointer to the objects
-    BaseDataFacade<QueryEdge::EdgeData> *query_data_facade;
+private:
+	void RegisterPlugin(BasePlugin *plugin);
+	PluginMap plugin_map;
+	// will only be initialized if shared memory is used
+	std::unique_ptr<SharedBarriers> barrier;
+	// base class pointer to the objects
+	BaseDataFacade<QueryEdge::EdgeData> *query_data_facade;
 };
 
 #endif // OSRM_IMPL_H

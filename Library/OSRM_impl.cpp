@@ -116,7 +116,7 @@ void OSRM_impl::RunQuery(RouteParameters &route_parameters, http::Reply &reply)
 			boost::interprocess::scoped_lock<boost::interprocess::named_mutex> query_lock(
 						barrier->query_mutex);
 
-			// unlock update pending
+			// unlock update pendingRunQuery
 			pending_lock.unlock();
 
 			// increment query count
