@@ -192,7 +192,29 @@ int Prepare::Process(int argc, char *argv[])
 
 	WriteNodeMapping();
 
+
+
+
+
+	// Storing edges in vector in preparation for preprocessing
+	std::vector<EdgeContainer> edges;
+	edges.reserve(edge_based_edge_list.size() * 2);
+	const auto dend = edge_based_edge_list.dend();
+	for (auto diter = edge_based_edge_list.dbegin(); diter != dend; ++diter)
+	{
+		BOOST_ASSERT_MSG(static_cast<unsigned int>(std::max(diter->weight, 1)) > 0, "edge distance < 1");
+		edges.emplace_back(diter->source, diter->target,
+						   static_cast<unsigned int>(std::max(diter->weight, 1)),
+						   1,
+						   diter->edge_id,
+						   false,
+						   diter->forward ? true : false,
+						   diter->backward ? true : false);
+	}
+	edges.shrink_to_fit();
+
 	/*
+	//saving to file
 	boost::filesystem::ofstream expanded_graph_output_stream(expanded_graph_out, std::ios::binary);
 	const unsigned node_array_size = node_array.size();
 	// serialize crc32, aka checksum
@@ -227,35 +249,26 @@ int Prepare::Process(int argc, char *argv[])
 	expanded_graph_output_stream.close();
 	*/
 
-	std::vector<ContractorEdge> edges;
-	edges.reserve(input_edge_list.size() * 2);
-	const auto dend = edge_based_edge_list.dend();
-	for (auto diter = edge_based_edge_list.dbegin(); diter != dend; ++diter)
-	{
-		BOOST_ASSERT_MSG(static_cast<unsigned int>(std::max(diter->weight, 1)) > 0, "edge distance < 1");
-#ifndef NDEBUG
-		if (static_cast<unsigned int>(std::max(diter->weight, 1)) > 24 * 60 * 60 * 10)
-		{
-			SimpleLogger().Write(logWARNING) << "Edge weight large -> "
-											 << static_cast<unsigned int>(std::max(diter->weight, 1));
-		}
-#endif
-		edges.emplace_back(diter->source, diter->target,
-						   static_cast<unsigned int>(std::max(diter->weight, 1)),
-						   1,
-						   diter->edge_id,
-						   false,
-						   diter->forward ? true : false,
-						   diter->backward ? true : false);
 
-		edges.emplace_back(diter->target, diter->source,
-						   static_cast<unsigned int>(std::max(diter->weight, 1)),
-						   1,
-						   diter->edge_id,
-						   false,
-						   diter->backward ? true : false,
-						   diter->forward ? true : false);
+
+
+	// restoring edges for preprocessing
+
+	DeallocatingVector<EdgeBasedEdge> restored_edge_based_edge_list;
+	restored_edge_based_edge_list.clear();
+	const auto drestend = edges.cend();
+	for (auto drestiter = edges.cbegin(); drestiter != drestend; ++drestiter)
+	{
+		restored_edge_based_edge_list.emplace_back(EdgeBasedEdge(drestiter->source,
+														  drestiter->target,
+														  drestiter->id,
+														  drestiter->distance,
+														  drestiter->forward,
+														  drestiter->backward));
 	}
+
+
+
 
 	/***
 	 * Contracting the edge-expanded graph
@@ -263,7 +276,7 @@ int Prepare::Process(int argc, char *argv[])
 
 	SimpleLogger().Write() << "initializing contractor";
 	auto contractor =
-			osrm::make_unique<Contractor>(number_of_edge_based_nodes, edge_based_edge_list);
+			osrm::make_unique<Contractor>(number_of_edge_based_nodes, restored_edge_based_edge_list);
 
 	TIMER_START(contraction);
 	contractor->Run();
