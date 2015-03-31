@@ -33,15 +33,12 @@ OPTION(BUILD_TOOLS "Build OSRM tools" OFF)
 include_directories(${CMAKE_SOURCE_DIR}/Include/)
 include_directories(${CMAKE_SOURCE_DIR}/third_party/)
 
-add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/Util/finger_print.cpp finger_print.cpp.alwaysbuild
-  COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${CMAKE_SOURCE_DIR}
-    -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FingerPrint-Config.cmake
-  DEPENDS
-    ${CMAKE_SOURCE_DIR}/Util/finger_print.cpp.in
-  COMMENT "Configuring finger_print.cpp"
+add_custom_target(FingerPrintConfigure ALL
+  ${CMAKE_COMMAND} -DSOURCE_DIR=${CMAKE_SOURCE_DIR}
+	-P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FingerPrint-Config.cmake
+  COMMENT "Configuring revision fingerprint"
   VERBATIM)
 
-add_custom_target(FingerPrintConfigure DEPENDS ${CMAKE_SOURCE_DIR}/Util/finger_print.cpp)
 add_custom_target(tests DEPENDS datastructure-tests algorithm-tests)
 add_custom_target(benchmarks DEPENDS rtree-bench)
 
