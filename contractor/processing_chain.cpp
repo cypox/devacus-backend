@@ -219,7 +219,7 @@ int Prepare::Process(int argc, char *argv[])
 	//number of nodes
 	expanded_graph_output_stream.write((char *)&number_of_node_based_nodes, sizeof(unsigned));
 	//number of edges
-	expanded_graph_output_stream.write((char *)&edges.size(), sizeof(unsigned));
+	expanded_graph_output_stream.write((char *)edges.size(), sizeof(unsigned));
 	//serializing edges
 	const auto edge_iter_end = edges.cend();
 	for ( auto edge_iter = edges.begin() ; edge_iter != edge_iter_end ; ++ edge_iter )
@@ -228,8 +228,8 @@ int Prepare::Process(int argc, char *argv[])
 		expanded_graph_output_stream.write((char *)&edge_iter->target, sizeof(unsigned));
 		expanded_graph_output_stream.write((char *)&edge_iter->distance, sizeof(unsigned));
 		expanded_graph_output_stream.write((char *)&edge_iter->id, sizeof(unsigned));
-		expanded_graph_output_stream.write((char *)&edge_iter->forward, sizeof(bool));
-		expanded_graph_output_stream.write((char *)&edge_iter->backward, sizeof(bool));
+		expanded_graph_output_stream.write((char *)edge_iter->forward, sizeof(bool));
+		expanded_graph_output_stream.write((char *)edge_iter->backward, sizeof(bool));
 	}
 	expanded_graph_output_stream.close();
 

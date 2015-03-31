@@ -33,5 +33,5 @@ When using the code in a (scientific) publication, please cite the original auth
 
 | build config |  branch | status |
 |:-------------|:--------|:------------|
-| Linux        | master  | [![Build Status](https://travis-ci.org/cypox/devacus-backend.png?branch=master)](https://travis-ci.org/DennisOSRM/Project-OSRM) |
-| Linux        | develop | [![Build Status](https://travis-ci.org/cypox/devacus-backend.png?branch=develop)](https://travis-ci.org/DennisOSRM/Project-OSRM) |
+| Linux        | master  | [![Build Status](https://travis-ci.org/cypox/devacus-backend.png?branch=master)](https://travis-ci.org/cypox/devacus-backend) |
+| Linux        | develop | [![Build Status](https://travis-ci.org/cypox/devacus-backend.png?branch=develop)](https://travis-ci.org/cypox/devacus-backend) |
