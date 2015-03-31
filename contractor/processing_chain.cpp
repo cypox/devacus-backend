@@ -220,39 +220,18 @@ int Prepare::Process(int argc, char *argv[])
 	expanded_graph_output_stream.write((char *)&number_of_node_based_nodes, sizeof(unsigned));
 	//number of edges
 	expanded_graph_output_stream.write((char *)&edges.size(), sizeof(unsigned));
-
-	/*
-	// serialize crc32, aka checksum
-	expanded_graph_output_stream.write((char *)&crc32_value, sizeof(unsigned));
-	// serialize number of nodes
-	expanded_graph_output_stream.write((char *)&number_of_node_based_nodes, sizeof(unsigned));
-	// serialize number of edges
-	expanded_graph_output_stream.write((char *)&edge_based_edge_list.size(), sizeof(unsigned));
-
-	// serialize all edges
-
-	SimpleLogger().Write() << "Building edge array";
-	edge = 0;
-	int number_of_used_edges = 0;
-
-	StaticGraph<EdgeData>::EdgeArrayEntry current_edge;
-	for (const auto edge : osrm::irange<std::size_t>(0, contracted_edge_list.size()))
+	//serializing edges
+	const auto edge_iter_end = edges.cend();
+	for ( auto edge_iter = edges.begin() ; edge_iter != edge_iter_end ; ++ edge_iter )
 	{
-		// no eigen loops
-		BOOST_ASSERT(contracted_edge_list[edge].source != contracted_edge_list[edge].target);
-		current_edge.target = contracted_edge_list[edge].target;
-		current_edge.data = contracted_edge_list[edge].data;
-
-		// every target needs to be valid
-		BOOST_ASSERT(current_edge.target < max_used_node_id);
-
-		expanded_graph_output_stream.write((char *)&current_edge,
-								 sizeof(StaticGraph<EdgeData>::EdgeArrayEntry));
-
-		++number_of_used_edges;
+		expanded_graph_output_stream.write((char *)&edge_iter->source, sizeof(unsigned));
+		expanded_graph_output_stream.write((char *)&edge_iter->target, sizeof(unsigned));
+		expanded_graph_output_stream.write((char *)&edge_iter->distance, sizeof(unsigned));
+		expanded_graph_output_stream.write((char *)&edge_iter->id, sizeof(unsigned));
+		expanded_graph_output_stream.write((char *)&edge_iter->forward, sizeof(bool));
+		expanded_graph_output_stream.write((char *)&edge_iter->backward, sizeof(bool));
 	}
 	expanded_graph_output_stream.close();
-	*/
 
 
 
