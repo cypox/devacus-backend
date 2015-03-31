@@ -11,7 +11,7 @@ install:
 # - sudo apt-get -q install g++-4.8
  - sudo apt-get install libboost1.54-all-dev
  # luabind
-# - curl https://gist.githubusercontent.com/DennisOSRM/f2eb7b948e6fe1ae319e/raw/install-luabind.sh | sudo bash
+ - curl https://gist.githubusercontent.com/DennisOSRM/f2eb7b948e6fe1ae319e/raw/install-luabind.sh | sudo bash
  # osmosis
 # - curl -s https://gist.githubusercontent.com/DennisOSRM/803a64a9178ec375069f/raw/ | sudo bash
  # cmake
