@@ -50,10 +50,10 @@ class RequestHandler
     RequestHandler(const RequestHandler &) = delete;
 
     void handle_request(const http::Request &req, http::Reply &rep);
-    void RegisterRoutingMachine(OSRM *osrm);
+	void RegisterRoutingMachine(OSRM *osrm);
 
   private:
-    OSRM *routing_machine;
+	OSRM *routing_machine;
 };
 
 #endif // REQUEST_HANDLER_H

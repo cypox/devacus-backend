@@ -192,188 +192,31 @@ int Prepare::Process(int argc, char *argv[])
 
 	WriteNodeMapping();
 
+	tbb::parallel_sort(edge_based_edge_list.begin(), edge_based_edge_list.end());
+
 	// Storing edges in vector in preparation for preprocessing
-	std::vector<EdgeContainer> edges;
-	edges.reserve(edge_based_edge_list.size() * 2);
+	boost::filesystem::ofstream expanded_graph_output_stream(expanded_graph_out, std::ios::binary);
+	//check sum
+	expanded_graph_output_stream.write((char *)&crc32_value, sizeof(unsigned));
+	//number of nodes
+	expanded_graph_output_stream.write((char *)&number_of_edge_based_nodes, sizeof(unsigned));
+	//number of edges
+	unsigned nedges = edge_based_edge_list.size();
+	expanded_graph_output_stream.write((char *)&nedges, sizeof(unsigned));
+	//serializing edges
 	const auto dend = edge_based_edge_list.dend();
 	for (auto diter = edge_based_edge_list.dbegin(); diter != dend; ++diter)
 	{
-		BOOST_ASSERT_MSG(static_cast<unsigned int>(std::max(diter->weight, 1)) > 0, "edge distance < 1");
-		edges.emplace_back(diter->source, diter->target,
-						   static_cast<unsigned int>(std::max(diter->weight, 1)),
-						   1,
-						   diter->edge_id,
-						   false,
-						   diter->forward ? true : false,
-						   diter->backward ? true : false);
-	}
-	edges.shrink_to_fit();
-
-
-	//saving to file
-	boost::filesystem::ofstream expanded_graph_output_stream(expanded_graph_out, std::ios::binary);
-	//writing crc
-	expanded_graph_output_stream.write((char *)&crc32_value, sizeof(unsigned));
-	//number of nodes
-	expanded_graph_output_stream.write((char *)&number_of_node_based_nodes, sizeof(unsigned));
-	//number of edges
-	unsigned nedges = edges.size();
-	expanded_graph_output_stream.write((char *)&nedges, sizeof(unsigned));
-	//serializing edges
-	EdgeContainer tmp_edge;
-	const auto edge_iter_end = edges.cend();
-	for ( auto edge_iter = edges.begin() ; edge_iter != edge_iter_end ; ++ edge_iter )
-	{
-		tmp_edge.source = edge_iter->source;
-		tmp_edge.target = edge_iter->target;
-		tmp_edge.distance = edge_iter->distance;
-		tmp_edge.id = edge_iter->id;
-		tmp_edge.forward = edge_iter->forward;
-		tmp_edge.backward = edge_iter->backward;
-		expanded_graph_output_stream.write((char *)&tmp_edge, sizeof(EdgeContainer));
+		ExpandedEdge tmp_edge;
+		tmp_edge.source = diter->source;
+		tmp_edge.target = diter->target;
+		tmp_edge.distance = static_cast<unsigned int>(std::max(diter->weight, 1));
+		tmp_edge.id = diter->edge_id;
+		tmp_edge.forward = diter->forward ? true : false;
+		tmp_edge.backward = diter->backward ? true : false;
+		expanded_graph_output_stream.write((char *)&tmp_edge, sizeof(ExpandedEdge));
 	}
 	expanded_graph_output_stream.close();
-
-
-
-/*
-	// restoring edges for preprocessing
-
-	DeallocatingVector<EdgeBasedEdge> restored_edge_based_edge_list;
-	restored_edge_based_edge_list.clear();
-	const auto drestend = edges.cend();
-	for (auto drestiter = edges.cbegin(); drestiter != drestend; ++drestiter)
-	{
-		restored_edge_based_edge_list.emplace_back(EdgeBasedEdge(drestiter->source,
-														  drestiter->target,
-														  drestiter->id,
-														  drestiter->distance,
-														  drestiter->forward,
-														  drestiter->backward));
-	}
-
-	// Contracting the edge-expanded graph
-
-	SimpleLogger().Write() << "initializing contractor";
-	auto contractor =
-			osrm::make_unique<Contractor>(number_of_edge_based_nodes, restored_edge_based_edge_list);
-
-	TIMER_START(contraction);
-	contractor->Run();
-	TIMER_STOP(contraction);
-
-	SimpleLogger().Write() << "Contraction took " << TIMER_SEC(contraction) << " sec";
-
-	DeallocatingVector<QueryEdge> contracted_edge_list;
-	contractor->GetEdges(contracted_edge_list);
-	contractor.reset();
-
-	// Sorting contracted edges in a way that the static query graph can read some in in-place.
-
-
-	tbb::parallel_sort(contracted_edge_list.begin(), contracted_edge_list.end());
-	const unsigned contracted_edge_count = contracted_edge_list.size();
-	SimpleLogger().Write() << "Serializing compacted graph of " << contracted_edge_count
-						   << " edges";
-
-	boost::filesystem::ofstream hsgr_output_stream(graph_out, std::ios::binary);
-	hsgr_output_stream.write((char *)&fingerprint_orig, sizeof(FingerPrint));
-	const unsigned max_used_node_id = 1 + [&contracted_edge_list]
-	{
-		unsigned tmp_max = 0;
-		for (const QueryEdge &edge : contracted_edge_list)
-		{
-			BOOST_ASSERT(SPECIAL_NODEID != edge.source);
-			BOOST_ASSERT(SPECIAL_NODEID != edge.target);
-			tmp_max = std::max(tmp_max, edge.source);
-			tmp_max = std::max(tmp_max, edge.target);
-		}
-		return tmp_max;
-	}();
-
-	SimpleLogger().Write(logDEBUG) << "input graph has " << number_of_edge_based_nodes << " nodes";
-	SimpleLogger().Write(logDEBUG) << "contracted graph has " << max_used_node_id << " nodes";
-
-	std::vector<StaticGraph<EdgeData>::NodeArrayEntry> node_array;
-	node_array.resize(number_of_edge_based_nodes + 1);
-
-	SimpleLogger().Write() << "Building node array";
-	StaticGraph<EdgeData>::EdgeIterator edge = 0;
-	StaticGraph<EdgeData>::EdgeIterator position = 0;
-	StaticGraph<EdgeData>::EdgeIterator last_edge = edge;
-
-	// initializing 'first_edge'-field of nodes:
-	for (const auto node : osrm::irange(0u, max_used_node_id))
-	{
-		last_edge = edge;
-		while ((edge < contracted_edge_count) && (contracted_edge_list[edge].source == node))
-		{
-			++edge;
-		}
-		node_array[node].first_edge = position; //=edge
-		position += edge - last_edge;           // remove
-	}
-
-	for (const auto sentinel_counter : osrm::irange<unsigned>(max_used_node_id, node_array.size()))
-	{
-		// sentinel element, guarded against underflow
-		node_array[sentinel_counter].first_edge = contracted_edge_count;
-	}
-
-	SimpleLogger().Write() << "Serializing node array";
-
-	const unsigned node_array_size = node_array.size();
-	// serialize crc32, aka checksum
-	hsgr_output_stream.write((char *)&crc32_value, sizeof(unsigned));
-	// serialize number of nodes
-	hsgr_output_stream.write((char *)&node_array_size, sizeof(unsigned));
-	// serialize number of edges
-	hsgr_output_stream.write((char *)&contracted_edge_count, sizeof(unsigned));
-	// serialize all nodes
-	if (node_array_size > 0)
-	{
-		hsgr_output_stream.write((char *)&node_array[0],
-				sizeof(StaticGraph<EdgeData>::NodeArrayEntry) * node_array_size);
-	}
-	// serialize all edges
-
-	SimpleLogger().Write() << "Building edge array";
-	edge = 0;
-	int number_of_used_edges = 0;
-
-	StaticGraph<EdgeData>::EdgeArrayEntry current_edge;
-	for (const auto edge : osrm::irange<std::size_t>(0, contracted_edge_list.size()))
-	{
-		// no eigen loops
-		BOOST_ASSERT(contracted_edge_list[edge].source != contracted_edge_list[edge].target);
-		current_edge.target = contracted_edge_list[edge].target;
-		current_edge.data = contracted_edge_list[edge].data;
-
-		// every target needs to be valid
-		BOOST_ASSERT(current_edge.target < max_used_node_id);
-#ifndef NDEBUG
-		if (current_edge.data.distance <= 0)
-		{
-			SimpleLogger().Write(logWARNING) << "Edge: " << edge
-											 << ",source: " << contracted_edge_list[edge].source
-											 << ", target: " << contracted_edge_list[edge].target
-											 << ", dist: " << current_edge.data.distance;
-
-			SimpleLogger().Write(logWARNING) << "Failed at adjacency list of node "
-											 << contracted_edge_list[edge].source << "/"
-											 << node_array.size() - 1;
-			return 1;
-		}
-#endif
-		hsgr_output_stream.write((char *)&current_edge,
-								 sizeof(StaticGraph<EdgeData>::EdgeArrayEntry));
-
-		++number_of_used_edges;
-	}
-	hsgr_output_stream.close();
-
-	node_array.clear();
-*/
 
 	TIMER_STOP(preparing);
 

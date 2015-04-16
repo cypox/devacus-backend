@@ -34,24 +34,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct ExternalMemoryNode : QueryNode
 {
-    ExternalMemoryNode(int lat, int lon, NodeID id, bool barrier, bool traffic_light);
+	ExternalMemoryNode(int lat, int lon, NodeID id, bool barrier, bool traffic_light);
 
-    ExternalMemoryNode();
+	ExternalMemoryNode();
 
-    static ExternalMemoryNode min_value();
+	static ExternalMemoryNode min_value();
 
-    static ExternalMemoryNode max_value();
+	static ExternalMemoryNode max_value();
 
-    bool barrier;
-    bool traffic_lights;
+	bool barrier;
+	bool traffic_lights;
 };
 
 struct ExternalMemoryNodeSTXXLCompare
 {
-    using value_type = ExternalMemoryNode;
-    bool operator()(const ExternalMemoryNode &left, const ExternalMemoryNode &right) const;
-    value_type max_value();
-    value_type min_value();
+	using value_type = ExternalMemoryNode;
+	bool operator()(const ExternalMemoryNode &left, const ExternalMemoryNode &right) const;
+	value_type max_value();
+	value_type min_value();
 };
 
 #endif /* EXTERNAL_MEMORY_NODE_HPP_ */

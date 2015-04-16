@@ -35,27 +35,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct HeapData
 {
-    NodeID parent;
-    /* explicit */ HeapData(NodeID p) : parent(p) {}
+	NodeID parent;
+	/* explicit */ HeapData(NodeID p) : parent(p) {}
 };
 
 struct SearchEngineData
 {
-    using QueryHeap = BinaryHeap<NodeID, NodeID, int, HeapData, UnorderedMapStorage<NodeID, int>>;
-    using SearchEngineHeapPtr = boost::thread_specific_ptr<QueryHeap>;
+	using QueryHeap = BinaryHeap<NodeID, NodeID, int, HeapData, UnorderedMapStorage<NodeID, int>>;
+	using SearchEngineHeapPtr = boost::thread_specific_ptr<QueryHeap>;
 
-    static SearchEngineHeapPtr forwardHeap;
-    static SearchEngineHeapPtr backwardHeap;
-    static SearchEngineHeapPtr forwardHeap2;
-    static SearchEngineHeapPtr backwardHeap2;
-    static SearchEngineHeapPtr forwardHeap3;
-    static SearchEngineHeapPtr backwardHeap3;
+	static SearchEngineHeapPtr forwardHeap;
+	static SearchEngineHeapPtr backwardHeap;
+	static SearchEngineHeapPtr forwardHeap2;
+	static SearchEngineHeapPtr backwardHeap2;
+	static SearchEngineHeapPtr forwardHeap3;
+	static SearchEngineHeapPtr backwardHeap3;
 
-    void InitializeOrClearFirstThreadLocalStorage(const unsigned number_of_nodes);
+	void InitializeOrClearFirstThreadLocalStorage(const unsigned number_of_nodes);
 
-    void InitializeOrClearSecondThreadLocalStorage(const unsigned number_of_nodes);
+	void InitializeOrClearSecondThreadLocalStorage(const unsigned number_of_nodes);
 
-    void InitializeOrClearThirdThreadLocalStorage(const unsigned number_of_nodes);
+	void InitializeOrClearThirdThreadLocalStorage(const unsigned number_of_nodes);
 };
 
 #endif // SEARCH_ENGINE_DATA_HPP

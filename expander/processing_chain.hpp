@@ -45,6 +45,28 @@ struct lua_State;
  */
 class Prepare
 {
+	struct ExpandedEdge
+	{
+		ExpandedEdge()
+			: source(0), target(0), id(0), distance(0), forward(0), backward(0)
+		{
+		}
+		ExpandedEdge(unsigned source,
+					  unsigned target,
+					  unsigned id,
+					  unsigned distance,
+					  bool forward,
+					  bool backward)
+			: source(source), target(target), id(id), distance(distance), forward(forward), backward(backward)
+		{
+		}
+		unsigned source;
+		unsigned target;
+		unsigned id;
+		unsigned distance;
+		bool forward : 1;
+		bool backward : 1;
+	};
 	struct EdgeContainer
 	{
 		EdgeContainer()

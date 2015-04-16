@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "preprocessor/ch.hpp"
+#include "preprocessor/dcap.hpp"
 
 #include <boost/program_options.hpp>
 
@@ -33,7 +34,7 @@ int main(int argc, char *argv[])
 {
 	try
 	{
-		return CHPreprocess().Run(argc, argv);
+		return DCAPPreprocess().Run(argc, argv);
 	}
 	catch (boost::program_options::too_many_positional_options_error &)
 	{

@@ -60,7 +60,7 @@ add_executable(extractor ${ExtractorSources} $<TARGET_OBJECTS:COORDINATE> $<TARG
 
 add_library(RESTRICTION OBJECT data_structures/restriction_map.cpp)
 
-file(GLOB PrepareGlob contractor/*.cpp data_structures/hilbert_value.cpp Util/compute_angle.cpp {RestrictionMapGlob})
+file(GLOB PrepareGlob expander/*.cpp data_structures/hilbert_value.cpp Util/compute_angle.cpp {RestrictionMapGlob})
 set(PrepareSources prepare.cpp ${PrepareGlob})
 add_executable(expander ${PrepareSources} $<TARGET_OBJECTS:FINGERPRINT> $<TARGET_OBJECTS:GITDESCRIPTION> $<TARGET_OBJECTS:COORDINATE> $<TARGET_OBJECTS:IMPORT> $<TARGET_OBJECTS:LOGGER> $<TARGET_OBJECTS:RESTRICTION> $<TARGET_OBJECTS:EXCEPTION>)
 
@@ -77,6 +77,7 @@ file(GLOB CoordinateGlob data_structures/Coordinate.cpp)
 file(GLOB AlgorithmGlob algorithms/*.cpp)
 file(GLOB HttpGlob Server/Http/*.cpp)
 file(GLOB LibOSRMGlob Library/*.cpp)
+file(GLOB LibDRMGlob LibDRM/*.cpp)
 file(GLOB DataStructureTestsGlob UnitTests/data_structures/*.cpp data_structures/hilbert_value.cpp)
 file(GLOB AlgorithmTestsGlob UnitTests/Algorithms/*.cpp)
 
@@ -95,8 +96,24 @@ add_library(GITDESCRIPTION OBJECT Util/git_sha.cpp)
 add_library(OSRM ${OSRMSources} $<TARGET_OBJECTS:GITDESCRIPTION> $<TARGET_OBJECTS:FINGERPRINT> $<TARGET_OBJECTS:COORDINATE> $<TARGET_OBJECTS:LOGGER> $<TARGET_OBJECTS:PHANTOMNODE> $<TARGET_OBJECTS:EXCEPTION>)
 add_dependencies(FINGERPRINT FingerPrintConfigure)
 
-add_executable(server routed.cpp ${ServerGlob} $<TARGET_OBJECTS:EXCEPTION>)
+add_executable(s_server s_routed.cpp ${ServerGlob} $<TARGET_OBJECTS:EXCEPTION>)
 add_executable(osrm-datastore datastore.cpp $<TARGET_OBJECTS:COORDINATE> $<TARGET_OBJECTS:FINGERPRINT> $<TARGET_OBJECTS:GITDESCRIPTION> $<TARGET_OBJECTS:LOGGER> $<TARGET_OBJECTS:EXCEPTION>)
+
+# Dynamic server
+file(GLOB DynServerGlob DynamicServer/*.cpp)
+
+set(
+  DRMSources
+  ${LibDRMGlob}
+  ${DescriptorGlob}
+  ${DatastructureGlob}
+  ${CoordinateGlob}
+  ${AlgorithmGlob}
+  ${HttpGlob}
+)
+
+add_library(DRM ${DRMSources} $<TARGET_OBJECTS:GITDESCRIPTION> $<TARGET_OBJECTS:FINGERPRINT> $<TARGET_OBJECTS:COORDINATE> $<TARGET_OBJECTS:LOGGER> $<TARGET_OBJECTS:PHANTOMNODE> $<TARGET_OBJECTS:EXCEPTION>)
+add_executable(d_server d_routed.cpp ${DynServerGlob} ${HttpGlob} $<TARGET_OBJECTS:EXCEPTION>)
 
 # Unit tests
 add_executable(datastructure-tests EXCLUDE_FROM_ALL UnitTests/datastructure_tests.cpp ${DataStructureTestsGlob} $<TARGET_OBJECTS:COORDINATE> $<TARGET_OBJECTS:LOGGER> $<TARGET_OBJECTS:PHANTOMNODE> $<TARGET_OBJECTS:EXCEPTION>)
@@ -109,10 +126,6 @@ add_executable(rtree-bench EXCLUDE_FROM_ALL benchmarks/static_rtree.cpp $<TARGET
 if(NOT CMAKE_BUILD_TYPE MATCHES Debug)
   set(CMAKE_BUILD_TYPE Release)
 endif()
-
-
-set(CMAKE_BUILD_TYPE Debug)
-
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   message(STATUS "Configuring OSRM in debug mode")
@@ -202,6 +215,7 @@ if(UNIX AND NOT APPLE)
   target_link_libraries(preprocessor rt)
   target_link_libraries(osrm-datastore rt)
   target_link_libraries(OSRM rt)
+  target_link_libraries(DRM rt)
 endif()
 
 #Check Boost
@@ -213,10 +227,12 @@ endif()
 include_directories(${Boost_INCLUDE_DIRS})
 
 target_link_libraries(OSRM ${Boost_LIBRARIES})
+target_link_libraries(DRM ${Boost_LIBRARIES})
 target_link_libraries(extractor ${Boost_LIBRARIES})
 target_link_libraries(expander ${Boost_LIBRARIES})
 target_link_libraries(preprocessor ${Boost_LIBRARIES})
-target_link_libraries(server ${Boost_LIBRARIES} ${OPTIONAL_SOCKET_LIBS} OSRM)
+target_link_libraries(s_server ${Boost_LIBRARIES} ${OPTIONAL_SOCKET_LIBS} OSRM)
+target_link_libraries(d_server ${Boost_LIBRARIES} ${OPTIONAL_SOCKET_LIBS} DRM OSRM)
 target_link_libraries(osrm-datastore ${Boost_LIBRARIES})
 target_link_libraries(datastructure-tests ${Boost_LIBRARIES})
 target_link_libraries(algorithm-tests ${Boost_LIBRARIES} ${OPTIONAL_SOCKET_LIBS} OSRM)
@@ -228,6 +244,7 @@ target_link_libraries(osrm-datastore ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(expander ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(preprocessor ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(OSRM ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(DRM ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(datastructure-tests ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(algorithm-tests ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(rtree-bench ${CMAKE_THREAD_LIBS_INIT})
@@ -240,7 +257,8 @@ target_link_libraries(osrm-datastore ${TBB_LIBRARIES})
 target_link_libraries(extractor ${TBB_LIBRARIES})
 target_link_libraries(expander ${TBB_LIBRARIES})
 target_link_libraries(preprocessor ${TBB_LIBRARIES})
-target_link_libraries(server ${TBB_LIBRARIES})
+target_link_libraries(s_server ${TBB_LIBRARIES})
+target_link_libraries(d_server ${TBB_LIBRARIES})
 target_link_libraries(datastructure-tests ${TBB_LIBRARIES})
 target_link_libraries(algorithm-tests ${TBB_LIBRARIES})
 target_link_libraries(rtree-bench ${TBB_LIBRARIES})
@@ -272,6 +290,7 @@ target_link_libraries(extractor ${EXPAT_LIBRARIES})
 find_package( STXXL REQUIRED )
 include_directories(${STXXL_INCLUDE_DIR})
 target_link_libraries(OSRM ${STXXL_LIBRARY})
+target_link_libraries(DRM ${STXXL_LIBRARY})
 target_link_libraries(extractor ${STXXL_LIBRARY})
 target_link_libraries(expander ${STXXL_LIBRARY})
 target_link_libraries(preprocessor ${STXXL_LIBRARY})
@@ -300,7 +319,8 @@ target_link_libraries(extractor ${BZIP2_LIBRARIES})
 find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})
 target_link_libraries(extractor ${ZLIB_LIBRARY})
-target_link_libraries(server ${ZLIB_LIBRARY})
+target_link_libraries(s_server ${ZLIB_LIBRARY})
+target_link_libraries(d_server ${ZLIB_LIBRARY})
 
 if(WITH_TOOLS OR BUILD_TOOLS)
   message(STATUS "Activating OSRM internal tools")
@@ -331,11 +351,16 @@ if(WITH_TOOLS OR BUILD_TOOLS)
   add_executable(osrm-springclean tools/springclean.cpp $<TARGET_OBJECTS:FINGERPRINT> $<TARGET_OBJECTS:LOGGER> $<TARGET_OBJECTS:GITDESCRIPTION> $<TARGET_OBJECTS:EXCEPTION>)
   target_link_libraries(osrm-springclean ${Boost_LIBRARIES})
 
+  add_executable(check-osrm tools/check-osrm.cpp ${Boost_LIBRARIES} $<TARGET_OBJECTS:LOGGER>)
+  target_link_libraries(check-osrm ${Boost_LIBRARIES})
+
   install(TARGETS osrm-cli DESTINATION bin)
   install(TARGETS osrm-io-benchmark DESTINATION bin)
   install(TARGETS osrm-unlock-all DESTINATION bin)
   install(TARGETS osrm-check-hsgr DESTINATION bin)
   install(TARGETS osrm-springclean DESTINATION bin)
+
+  install(TARGETS check-osrm DESTINATION bin)
 endif()
 
 file(GLOB InstallGlob Include/osrm/*.h Library/OSRM.h)
@@ -346,15 +371,18 @@ file(GLOB InstallGlob Include/osrm/*.h Library/OSRM.h)
 set_property(TARGET extractor PROPERTY INSTALL_RPATH_USE_LINK_PATH TRUE)
 set_property(TARGET expander PROPERTY INSTALL_RPATH_USE_LINK_PATH TRUE)
 set_property(TARGET osrm-datastore PROPERTY INSTALL_RPATH_USE_LINK_PATH TRUE)
-set_property(TARGET server PROPERTY INSTALL_RPATH_USE_LINK_PATH TRUE)
+set_property(TARGET s_server PROPERTY INSTALL_RPATH_USE_LINK_PATH TRUE)
+set_property(TARGET d_server PROPERTY INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 install(FILES ${InstallGlob} DESTINATION include/osrm)
 install(TARGETS extractor DESTINATION bin)
 install(TARGETS expander DESTINATION bin)
 install(TARGETS preprocessor DESTINATION bin)
 install(TARGETS osrm-datastore DESTINATION bin)
-install(TARGETS server DESTINATION bin)
+install(TARGETS s_server DESTINATION bin)
+install(TARGETS d_server DESTINATION bin)
 install(TARGETS OSRM DESTINATION lib)
+install(TARGETS DRM DESTINATION lib)
 list(GET Boost_LIBRARIES 1 BOOST_LIBRARY_FIRST)
 get_filename_component(BOOST_LIBRARY_LISTING "${BOOST_LIBRARY_FIRST}" PATH)
 set(BOOST_LIBRARY_LISTING "-L${BOOST_LIBRARY_LISTING}")

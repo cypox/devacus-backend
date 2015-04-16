@@ -37,24 +37,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 template <class DataFacadeT> class SearchEngine
 {
-  private:
-    DataFacadeT *facade;
-    SearchEngineData engine_working_data;
+private:
+	DataFacadeT *facade;
+	SearchEngineData engine_working_data;
 
-  public:
-    ShortestPathRouting<DataFacadeT> shortest_path;
-    AlternativeRouting<DataFacadeT> alternative_path;
-    ManyToManyRouting<DataFacadeT> distance_table;
+public:
+	ShortestPathRouting<DataFacadeT> shortest_path;
+	AlternativeRouting<DataFacadeT> alternative_path;
+	ManyToManyRouting<DataFacadeT> distance_table;
 
-    explicit SearchEngine(DataFacadeT *facade)
-        : facade(facade), shortest_path(facade, engine_working_data),
-          alternative_path(facade, engine_working_data), distance_table(facade, engine_working_data)
-    {
-        static_assert(!std::is_pointer<DataFacadeT>::value, "don't instantiate with ptr type");
-        static_assert(std::is_object<DataFacadeT>::value, "don't instantiate with void, function, or reference");
-    }
+	explicit SearchEngine(DataFacadeT *facade)
+		: facade(facade), shortest_path(facade, engine_working_data),
+		  alternative_path(facade, engine_working_data), distance_table(facade, engine_working_data)
+	{
+		static_assert(!std::is_pointer<DataFacadeT>::value, "don't instantiate with ptr type");
+		static_assert(std::is_object<DataFacadeT>::value, "don't instantiate with void, function, or reference");
+	}
 
-    ~SearchEngine() {}
+	~SearchEngine() {}
 };
 
 #endif // SEARCH_ENGINE_HPP

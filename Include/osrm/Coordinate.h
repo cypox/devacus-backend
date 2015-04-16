@@ -38,76 +38,76 @@ constexpr float COORDINATE_PRECISION = 1000000.f;
 }
 struct FixedPointCoordinate
 {
-    int lat;
-    int lon;
+	int lat;
+	int lon;
 
-    FixedPointCoordinate();
-    FixedPointCoordinate(int lat, int lon);
+	FixedPointCoordinate();
+	FixedPointCoordinate(int lat, int lon);
 
-    template<class T>
-    FixedPointCoordinate(const T &coordinate) : lat(coordinate.lat), lon(coordinate.lon)
-    {
-        static_assert(std::is_same<decltype(lat), decltype(coordinate.lat)>::value, "coordinate types incompatible");
-        static_assert(std::is_same<decltype(lon), decltype(coordinate.lon)>::value, "coordinate types incompatible");
-    }
+	template<class T>
+	FixedPointCoordinate(const T &coordinate) : lat(coordinate.lat), lon(coordinate.lon)
+	{
+		static_assert(std::is_same<decltype(lat), decltype(coordinate.lat)>::value, "coordinate types incompatible");
+		static_assert(std::is_same<decltype(lon), decltype(coordinate.lon)>::value, "coordinate types incompatible");
+	}
 
-    void Reset();
-    bool isSet() const;
-    bool is_valid() const;
-    bool operator==(const FixedPointCoordinate &other) const;
+	void Reset();
+	bool isSet() const;
+	bool is_valid() const;
+	bool operator==(const FixedPointCoordinate &other) const;
 
-    static double
-    ApproximateDistance(const int lat1, const int lon1, const int lat2, const int lon2);
+	static double
+	ApproximateDistance(const int lat1, const int lon1, const int lat2, const int lon2);
 
-    static double ApproximateDistance(const FixedPointCoordinate &first_coordinate,
-                                      const FixedPointCoordinate &second_coordinate);
+	static double ApproximateDistance(const FixedPointCoordinate &first_coordinate,
+									  const FixedPointCoordinate &second_coordinate);
 
-    static float ApproximateEuclideanDistance(const FixedPointCoordinate &first_coordinate,
-                                              const FixedPointCoordinate &second_coordinate);
+	static float ApproximateEuclideanDistance(const FixedPointCoordinate &first_coordinate,
+											  const FixedPointCoordinate &second_coordinate);
 
-    static float
-    ApproximateEuclideanDistance(const int lat1, const int lon1, const int lat2, const int lon2);
+	static float
+	ApproximateEuclideanDistance(const int lat1, const int lon1, const int lat2, const int lon2);
 
-    static float ApproximateSquaredEuclideanDistance(const FixedPointCoordinate &first_coordinate,
-                                                     const FixedPointCoordinate &second_coordinate);
+	static float ApproximateSquaredEuclideanDistance(const FixedPointCoordinate &first_coordinate,
+													 const FixedPointCoordinate &second_coordinate);
 
-    static void convertInternalLatLonToString(const int value, std::string &output);
+	static void convertInternalLatLonToString(const int value, std::string &output);
 
-    static void convertInternalCoordinateToString(const FixedPointCoordinate &coordinate,
-                                                  std::string &output);
+	static void convertInternalCoordinateToString(const FixedPointCoordinate &coordinate,
+												  std::string &output);
 
-    static void convertInternalReversedCoordinateToString(const FixedPointCoordinate &coordinate,
-                                                          std::string &output);
+	static void convertInternalReversedCoordinateToString(const FixedPointCoordinate &coordinate,
+														  std::string &output);
 
-    static float ComputePerpendicularDistance(const FixedPointCoordinate &segment_source,
-                                              const FixedPointCoordinate &segment_target,
-                                              const FixedPointCoordinate &query_location);
+	static float ComputePerpendicularDistance(const FixedPointCoordinate &segment_source,
+											  const FixedPointCoordinate &segment_target,
+											  const FixedPointCoordinate &query_location);
 
-    static float ComputePerpendicularDistance(const FixedPointCoordinate &segment_source,
-                                              const FixedPointCoordinate &segment_target,
-                                              const FixedPointCoordinate &query_location,
-                                              FixedPointCoordinate &nearest_location,
-                                              float &ratio);
+	static float ComputePerpendicularDistance(const FixedPointCoordinate &segment_source,
+											  const FixedPointCoordinate &segment_target,
+											  const FixedPointCoordinate &query_location,
+											  FixedPointCoordinate &nearest_location,
+											  float &ratio);
 
-    static int
-    OrderedPerpendicularDistanceApproximation(const FixedPointCoordinate &segment_source,
-                                              const FixedPointCoordinate &segment_target,
-                                              const FixedPointCoordinate &query_location);
+	static int
+	OrderedPerpendicularDistanceApproximation(const FixedPointCoordinate &segment_source,
+											  const FixedPointCoordinate &segment_target,
+											  const FixedPointCoordinate &query_location);
 
-    static float GetBearing(const FixedPointCoordinate &A, const FixedPointCoordinate &B);
+	static float GetBearing(const FixedPointCoordinate &A, const FixedPointCoordinate &B);
 
-    float GetBearing(const FixedPointCoordinate &other) const;
+	float GetBearing(const FixedPointCoordinate &other) const;
 
-    void Output(std::ostream &out) const;
+	void Output(std::ostream &out) const;
 
-    static float DegreeToRadian(const float degree);
-    static float RadianToDegree(const float radian);
+	static float DegreeToRadian(const float degree);
+	static float RadianToDegree(const float radian);
 };
 
 inline std::ostream &operator<<(std::ostream &out_stream, FixedPointCoordinate const &coordinate)
 {
-    coordinate.Output(out_stream);
-    return out_stream;
+	coordinate.Output(out_stream);
+	return out_stream;
 }
 
 #endif /* FIXED_POINT_COORDINATE_H_ */

@@ -37,56 +37,56 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct RouteParameters
 {
-    RouteParameters();
+	RouteParameters();
 
-    void setZoomLevel(const short level);
-    
-    void setNumberOfResults(const short number);
+	void setZoomLevel(const short level);
 
-    void setAlternateRouteFlag(const bool flag);
+	void setNumberOfResults(const short number);
 
-    void setUTurn(const bool flag);
+	void setAlternateRouteFlag(const bool flag);
 
-    void setAllUTurns(const bool flag);
+	void setUTurn(const bool flag);
 
-    void setDeprecatedAPIFlag(const std::string &);
+	void setAllUTurns(const bool flag);
 
-    void setChecksum(const unsigned check_sum);
+	void setDeprecatedAPIFlag(const std::string &);
 
-    void setInstructionFlag(const bool flag);
+	void setChecksum(const unsigned check_sum);
 
-    void setService(const std::string &service);
+	void setInstructionFlag(const bool flag);
 
-    void setOutputFormat(const std::string &format);
+	void setService(const std::string &service);
 
-    void setJSONpParameter(const std::string &parameter);
+	void setOutputFormat(const std::string &format);
 
-    void addHint(const std::string &hint);
+	void setJSONpParameter(const std::string &parameter);
 
-    void setLanguage(const std::string &language);
+	void addHint(const std::string &hint);
 
-    void setGeometryFlag(const bool flag);
+	void setLanguage(const std::string &language);
 
-    void setCompressionFlag(const bool flag);
+	void setGeometryFlag(const bool flag);
 
-    void addCoordinate(const boost::fusion::vector<double, double> &coordinates);
+	void setCompressionFlag(const bool flag);
 
-    short zoom_level;
-    bool print_instructions;
-    bool alternate_route;
-    bool geometry;
-    bool compression;
-    bool deprecatedAPI;
-    bool uturn_default;
-    unsigned check_sum;
-    short num_results;
-    std::string service;
-    std::string output_format;
-    std::string jsonp_parameter;
-    std::string language;
-    std::vector<std::string> hints;
-    std::vector<bool> uturns;
-    std::vector<FixedPointCoordinate> coordinates;
+	void addCoordinate(const boost::fusion::vector<double, double> &coordinates);
+
+	short zoom_level;
+	bool print_instructions;
+	bool alternate_route;
+	bool geometry;
+	bool compression;
+	bool deprecatedAPI;
+	bool uturn_default;
+	unsigned check_sum;
+	short num_results;
+	std::string service;
+	std::string output_format;
+	std::string jsonp_parameter;
+	std::string language;
+	std::vector<std::string> hints;
+	std::vector<bool> uturns;
+	std::vector<FixedPointCoordinate> coordinates;
 };
 
 #endif // ROUTE_PARAMETERS_H

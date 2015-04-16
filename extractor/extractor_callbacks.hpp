@@ -45,24 +45,24 @@ struct ExtractionNode;
 
 class ExtractorCallbacks
 {
-  private:
-    std::unordered_map<std::string, NodeID> &string_map;
-    ExtractionContainers &external_memory;
+private:
+	std::unordered_map<std::string, NodeID> &string_map;
+	ExtractionContainers &external_memory;
 
-  public:
-    ExtractorCallbacks() = delete;
-    ExtractorCallbacks(const ExtractorCallbacks &) = delete;
-    explicit ExtractorCallbacks(ExtractionContainers &extraction_containers,
-                                std::unordered_map<std::string, NodeID> &string_map);
+public:
+	ExtractorCallbacks() = delete;
+	ExtractorCallbacks(const ExtractorCallbacks &) = delete;
+	explicit ExtractorCallbacks(ExtractionContainers &extraction_containers,
+								std::unordered_map<std::string, NodeID> &string_map);
 
-    // warning: caller needs to take care of synchronization!
-    void ProcessNode(const osmium::Node &current_node, const ExtractionNode &result_node);
+	// warning: caller needs to take care of synchronization!
+	void ProcessNode(const osmium::Node &current_node, const ExtractionNode &result_node);
 
-    // warning: caller needs to take care of synchronization!
-    void ProcessRestriction(const mapbox::util::optional<InputRestrictionContainer> &restriction);
+	// warning: caller needs to take care of synchronization!
+	void ProcessRestriction(const mapbox::util::optional<InputRestrictionContainer> &restriction);
 
-    // warning: caller needs to take care of synchronization!
-    void ProcessWay(const osmium::Way &current_way, const ExtractionWay &result_way);
+	// warning: caller needs to take care of synchronization!
+	void ProcessWay(const osmium::Way &current_way, const ExtractionWay &result_way);
 };
 
 #endif /* EXTRACTOR_CALLBACKS_HPP */

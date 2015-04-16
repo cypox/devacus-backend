@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../data_structures/external_memory_node.hpp"
 #include "../data_structures/import_edge.hpp"
 #include "../data_structures/query_node.hpp"
+#include "../data_structures/query_edge.hpp"
 #include "../data_structures/restriction.hpp"
 #include "../Util/simple_logger.hpp"
 #include "../Util/FingerPrint.h"
@@ -51,6 +52,31 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iomanip>
 #include <unordered_map>
 #include <vector>
+
+struct ExpandedEdge
+{
+	ExpandedEdge()
+		: source(0), target(0), id(0), distance(0), forward(0), backward(0)
+	{
+	}
+	ExpandedEdge(unsigned source,
+				 unsigned target,
+				 unsigned id,
+				 unsigned distance,
+				 bool forward,
+				 bool backward)
+		: source(source), target(target), id(id), distance(distance), forward(forward), backward(backward)
+	{
+	}
+	unsigned source;
+	unsigned target;
+	unsigned id;
+	unsigned distance;
+	bool forward : 1;
+	bool backward : 1;
+};
+
+using EdgeIterator = NodeID;
 
 template <typename EdgeT>
 NodeID readBinaryOSRMGraphFromStream(std::istream &input_stream,
@@ -271,6 +297,107 @@ NodeID readBinaryOSRMGraphFromStream(std::istream &input_stream,
 	edge_list.shrink_to_fit();
 	SimpleLogger().Write() << "Graph loaded ok and has " << edge_list.size() << " edges";
 	return n;
+}
+
+template <typename NodeT, typename EdgeT>
+unsigned readEdgeExpandedGraph(const boost::filesystem::path &expanded_graph
+							   , std::vector<NodeT> &node_list
+							   , std::vector<EdgeT> &edge_list
+							   //, unsigned *check_sum
+							   )
+{
+	if (!boost::filesystem::exists(expanded_graph))
+	{
+		throw osrm::exception("expanded graph file does not exist");
+	}
+	if (0 == boost::filesystem::file_size(expanded_graph))
+	{
+		throw osrm::exception("expanded graph file is empty");
+	}
+
+	boost::filesystem::ifstream expanded_graph_input_stream(expanded_graph, std::ios::binary);
+
+	/*
+	FingerPrint fingerprint_loaded, fingerprint_orig;
+	expanded_graph_input_stream.read((char *)&fingerprint_loaded, sizeof(FingerPrint));
+	if (!fingerprint_loaded.TestGraphUtil(fingerprint_orig))
+	{
+		SimpleLogger().Write(logWARNING) << ".expanded was prepared with different build.\n"
+											"Reprocess to get rid of this warning.";
+	}
+	*/
+
+	unsigned number_of_edge_based_nodes = 0;
+	unsigned number_of_edge_based_edges = 0;
+	unsigned check_sum;
+	expanded_graph_input_stream.read((char *)&check_sum, sizeof(unsigned));
+	expanded_graph_input_stream.read((char *)&number_of_edge_based_nodes, sizeof(unsigned));
+	BOOST_ASSERT_MSG(0 != number_of_edge_based_nodes, "number of nodes is zero");
+	expanded_graph_input_stream.read((char *)&number_of_edge_based_edges, sizeof(unsigned));
+
+	SimpleLogger().Write() << "number_of_nodes: " << number_of_edge_based_nodes
+						   << ", number_of_edges: " << number_of_edge_based_edges;
+
+	BOOST_ASSERT_MSG( 0 != number_of_edge_based_edges, "number of edges is zero");
+	std::vector<QueryEdge> edges;
+	ExpandedEdge tmp_edge;
+	QueryEdge::EdgeData tmp_data;
+	for ( unsigned i = 0; i < number_of_edge_based_edges ; ++ i )
+	{
+		expanded_graph_input_stream.read((char *)&tmp_edge, sizeof(ExpandedEdge));
+		tmp_data.backward = tmp_edge.backward;
+		tmp_data.forward = tmp_edge.forward;
+		tmp_data.distance = tmp_edge.distance;
+		tmp_data.shortcut = false;
+		tmp_data.id = tmp_edge.id;
+		edges.emplace_back(QueryEdge(tmp_edge.source,
+									 tmp_edge.target,
+									 tmp_data));
+	}
+
+	SimpleLogger().Write() << "Building node array";
+	EdgeIterator edge = 0;
+	EdgeIterator position = 0;
+	EdgeIterator last_edge = edge;
+
+	// initializing 'first_edge'-field of nodes:
+	node_list.resize(number_of_edge_based_nodes + 1);
+	for (const auto node : osrm::irange(0u, number_of_edge_based_nodes))
+	{
+		last_edge = edge;
+		while ((edge < number_of_edge_based_edges) && (edges[edge].source == node))
+		{
+			++edge;
+		}
+		node_list[node].first_edge = position; //=edge
+		position += edge - last_edge;           // remove
+	}
+
+	for (const auto sentinel_counter : osrm::irange<unsigned>(number_of_edge_based_nodes, node_list.size()))
+	{
+		// sentinel element, guarded against underflow
+		node_list[sentinel_counter].first_edge = number_of_edge_based_edges;
+	}
+
+	SimpleLogger().Write() << "Building edge array";
+	edge = 0;
+	edge_list.resize(number_of_edge_based_edges);
+
+	for (const auto edge : osrm::irange<std::size_t>(0, edges.size()))
+	{
+		// no eigen loops
+		BOOST_ASSERT(edges[edge].source != edges[edge].target);
+		edge_list[edge].target = edges[edge].target;
+		edge_list[edge].data = edges[edge].data;
+
+		// every target needs to be valid
+		BOOST_ASSERT(edge_list[edge].target < number_of_edge_based_nodes);
+	}
+
+	//reding edges
+	expanded_graph_input_stream.close();
+
+	return number_of_edge_based_nodes;
 }
 
 template <typename NodeT, typename EdgeT>

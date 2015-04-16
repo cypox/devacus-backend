@@ -37,26 +37,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class BasePlugin
 {
-  public:
-    BasePlugin() {}
-    // Maybe someone can explain the pure virtual destructor thing to me (dennis)
-    virtual ~BasePlugin() {}
-    virtual const std::string GetDescriptor() const = 0;
-    virtual void HandleRequest(const RouteParameters &routeParameters, http::Reply &reply) = 0;
-    virtual bool check_all_coordinates(const std::vector<FixedPointCoordinate> coordinates) const final
-    {
-        if (2 > coordinates.size() ||
-            std::any_of(std::begin(coordinates),
-                        std::end(coordinates),
-                        [](const FixedPointCoordinate &coordinate)
-                        {
-                return !coordinate.is_valid();
-            }))
-        {
-            return false;
-        }
-        return true;
-    }
+public:
+	BasePlugin() {}
+	// Maybe someone can explain the pure virtual destructor thing to me (dennis)
+	virtual ~BasePlugin() {}
+	virtual const std::string GetDescriptor() const = 0;
+	virtual void HandleRequest(const RouteParameters &routeParameters, http::Reply &reply) = 0;
+	virtual bool check_all_coordinates(const std::vector<FixedPointCoordinate> coordinates) const final
+	{
+		if (2 > coordinates.size() ||
+				std::any_of(std::begin(coordinates),
+							std::end(coordinates),
+							[](const FixedPointCoordinate &coordinate)
+		{
+							return !coordinate.is_valid();
+	}))
+		{
+			return false;
+		}
+		return true;
+	}
 };
 
 #endif /* BASEPLUGIN_H_ */

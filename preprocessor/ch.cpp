@@ -27,9 +27,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ch.hpp"
 
-#include "../contractor/processing_chain.hpp"
+#include "../expander/processing_chain.hpp"
 
-#include "../contractor/contractor.hpp"
+#include "../expander/contractor.hpp"
 
 #include "../algorithms/crc32_processor.hpp"
 #include "../data_structures/deallocating_vector.hpp"
@@ -127,35 +127,28 @@ int CHPreprocess::Run(int argc, char *argv[])
 	unsigned number_of_edge_based_nodes = 0;
 	unsigned nedges = 0;
 	unsigned crc32_value;
-	std::vector<EdgeContainer> edges;
+	DeallocatingVector<EdgeBasedEdge> restored_edge_based_edge_list;
+	restored_edge_based_edge_list.clear();
 
-	//reading crc32
+	//reading check sum
 	expanded_graph_stream.read((char *)&crc32_value, sizeof(unsigned));
 	//raeding input file
 	expanded_graph_stream.read((char *)&number_of_edge_based_nodes, sizeof(unsigned));
 	//number of edges
 	expanded_graph_stream.read((char *)&nedges, sizeof(unsigned));
 	//reading edges
-	EdgeContainer tmp_edge;
+	ExpandedEdge tmp_edge;
 	for ( unsigned i = 0; i < nedges ; ++ i )
 	{
-		expanded_graph_stream.read((char *)&tmp_edge, sizeof(EdgeContainer));
-		edges.emplace_back(tmp_edge);
+		expanded_graph_stream.read((char *)&tmp_edge, sizeof(ExpandedEdge));
+		restored_edge_based_edge_list.emplace_back(EdgeBasedEdge(tmp_edge.source,
+														  tmp_edge.target,
+														  tmp_edge.id,
+														  tmp_edge.distance,
+														  tmp_edge.forward,
+														  tmp_edge.backward));
 	}
 	expanded_graph_stream.close();
-
-	DeallocatingVector<EdgeBasedEdge> restored_edge_based_edge_list;
-	restored_edge_based_edge_list.clear();
-	const auto drestend = edges.cend();
-	for (auto drestiter = edges.cbegin(); drestiter != drestend; ++drestiter)
-	{
-		restored_edge_based_edge_list.emplace_back(EdgeBasedEdge(drestiter->source,
-														  drestiter->target,
-														  drestiter->id,
-														  drestiter->distance,
-														  drestiter->forward,
-														  drestiter->backward));
-	}
 
 	/***
 	 * Contracting the edge-expanded graph

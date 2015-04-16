@@ -25,29 +25,66 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "expander/processing_chain.hpp"
+#ifndef REQUEST_PARSER_H
+#define REQUEST_PARSER_H
 
-#include <boost/program_options.hpp>
+#include "../Server/Http/CompressionType.h"
+#include <osrm/Header.h>
 
-int main(int argc, char *argv[])
+#include <boost/logic/tribool.hpp>
+#include <boost/tuple/tuple.hpp>
+
+namespace http
 {
-	try
-	{
-		return Prepare().Process(argc, argv);
-	}
-	catch (boost::program_options::too_many_positional_options_error &)
-	{
-		SimpleLogger().Write(logWARNING) << "Only one file can be specified";
-		return 1;
-	}
-	catch (boost::program_options::error &e)
-	{
-		SimpleLogger().Write(logWARNING) << e.what();
-		return 1;
-	}
-	catch (const std::exception &e)
-	{
-		SimpleLogger().Write(logWARNING) << "Exception occured: " << e.what() << std::endl;
-		return 1;
-	}
-}
+
+struct Request;
+
+class RequestParser
+{
+  public:
+    RequestParser();
+    void Reset();
+
+    boost::tuple<boost::tribool, char *>
+    Parse(Request &req, char *begin, char *end, CompressionType &compression_type);
+
+  private:
+    boost::tribool consume(Request &req, char input, CompressionType &compression_type);
+
+    inline bool isChar(int c);
+
+    inline bool isCTL(int c);
+
+    inline bool isTSpecial(int c);
+
+    inline bool isDigit(int c);
+
+    enum state
+    { method_start,
+      method,
+      uri_start,
+      uri,
+      http_version_h,
+      http_version_t_1,
+      http_version_t_2,
+      http_version_p,
+      http_version_slash,
+      http_version_major_start,
+      http_version_major,
+      http_version_minor_start,
+      http_version_minor,
+      expecting_newline_1,
+      header_line_start,
+      header_lws,
+      header_name,
+      space_before_header_value,
+      header_value,
+      expecting_newline_2,
+      expecting_newline_3 } state_;
+
+    Header header;
+};
+
+} // namespace http
+
+#endif // REQUEST_PARSER_H

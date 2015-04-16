@@ -37,51 +37,51 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct PhantomNode
 {
-    PhantomNode(NodeID forward_node_id,
-                NodeID reverse_node_id,
-                unsigned name_id,
-                int forward_weight,
-                int reverse_weight,
-                int forward_offset,
-                int reverse_offset,
-                unsigned packed_geometry_id,
-                unsigned component_id,
-                FixedPointCoordinate &location,
-                unsigned short fwd_segment_position,
-                TravelMode forward_travel_mode,
-                TravelMode backward_travel_mode);
+	PhantomNode(NodeID forward_node_id,
+				NodeID reverse_node_id,
+				unsigned name_id,
+				int forward_weight,
+				int reverse_weight,
+				int forward_offset,
+				int reverse_offset,
+				unsigned packed_geometry_id,
+				unsigned component_id,
+				FixedPointCoordinate &location,
+				unsigned short fwd_segment_position,
+				TravelMode forward_travel_mode,
+				TravelMode backward_travel_mode);
 
-    PhantomNode();
+	PhantomNode();
 
-    NodeID forward_node_id;
-    NodeID reverse_node_id;
-    unsigned name_id;
-    int forward_weight;
-    int reverse_weight;
-    int forward_offset;
-    int reverse_offset;
-    unsigned packed_geometry_id;
-    unsigned component_id;
-    FixedPointCoordinate location;
-    unsigned short fwd_segment_position;
-    TravelMode forward_travel_mode : 4;
-    TravelMode backward_travel_mode : 4;
+	NodeID forward_node_id;
+	NodeID reverse_node_id;
+	unsigned name_id;
+	int forward_weight;
+	int reverse_weight;
+	int forward_offset;
+	int reverse_offset;
+	unsigned packed_geometry_id;
+	unsigned component_id;
+	FixedPointCoordinate location;
+	unsigned short fwd_segment_position;
+	TravelMode forward_travel_mode : 4;
+	TravelMode backward_travel_mode : 4;
 
-    int GetForwardWeightPlusOffset() const;
+	int GetForwardWeightPlusOffset() const;
 
-    int GetReverseWeightPlusOffset() const;
+	int GetReverseWeightPlusOffset() const;
 
-    bool is_bidirected() const;
+	bool is_bidirected() const;
 
-    bool is_compressed() const;
+	bool is_compressed() const;
 
-    bool is_valid(const unsigned numberOfNodes) const;
+	bool is_valid(const unsigned numberOfNodes) const;
 
-    bool is_valid() const;
+	bool is_valid() const;
 
-    bool is_in_tiny_component() const;
+	bool is_in_tiny_component() const;
 
-    bool operator==(const PhantomNode & other) const;
+	bool operator==(const PhantomNode & other) const;
 };
 
 using PhantomNodeArray = std::vector<std::vector<PhantomNode>>;
@@ -93,37 +93,37 @@ class phantom_node_pair : public std::pair<PhantomNode, PhantomNode>
 
 struct PhantomNodeLists
 {
-    std::vector<PhantomNode> source_phantom_list;
-    std::vector<PhantomNode> target_phantom_list;
+	std::vector<PhantomNode> source_phantom_list;
+	std::vector<PhantomNode> target_phantom_list;
 };
 
 struct PhantomNodes
 {
-    PhantomNode source_phantom;
-    PhantomNode target_phantom;
+	PhantomNode source_phantom;
+	PhantomNode target_phantom;
 };
 
 inline std::ostream& operator<<(std::ostream &out, const PhantomNodes & pn)
 {
-    out << "source_coord: " << pn.source_phantom.location << "\n";
-    out << "target_coord: " << pn.target_phantom.location << std::endl;
-    return out;
+	out << "source_coord: " << pn.source_phantom.location << "\n";
+	out << "target_coord: " << pn.target_phantom.location << std::endl;
+	return out;
 }
 
 inline std::ostream& operator<<(std::ostream &out, const PhantomNode & pn)
 {
-    out <<  "node1: " << pn.forward_node_id      << ", " <<
-            "node2: " << pn.reverse_node_id      << ", " <<
-            "name: "  << pn.name_id              << ", " <<
-            "fwd-w: " << pn.forward_weight       << ", " <<
-            "rev-w: " << pn.reverse_weight       << ", " <<
-            "fwd-o: " << pn.forward_offset       << ", " <<
-            "rev-o: " << pn.reverse_offset       << ", " <<
-            "geom: "  << pn.packed_geometry_id   << ", " <<
-            "comp: "  << pn.component_id         << ", " <<
-            "pos: "   << pn.fwd_segment_position << ", " <<
-            "loc: "   << pn.location;
-    return out;
+	out <<  "node1: " << pn.forward_node_id      << ", " <<
+			"node2: " << pn.reverse_node_id      << ", " <<
+			"name: "  << pn.name_id              << ", " <<
+			"fwd-w: " << pn.forward_weight       << ", " <<
+			"rev-w: " << pn.reverse_weight       << ", " <<
+			"fwd-o: " << pn.forward_offset       << ", " <<
+			"rev-o: " << pn.reverse_offset       << ", " <<
+			"geom: "  << pn.packed_geometry_id   << ", " <<
+			"comp: "  << pn.component_id         << ", " <<
+			"pos: "   << pn.fwd_segment_position << ", " <<
+			"loc: "   << pn.location;
+	return out;
 }
 
 #endif // PHANTOM_NODES_H

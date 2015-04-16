@@ -42,7 +42,7 @@ struct lua_State;
 
 #include <vector>
 
-class CHPreprocess : Preprocess
+class DCAPPreprocess : Preprocess
 {
 	struct ExpandedEdge
 	{
@@ -101,9 +101,9 @@ public:
 	using InputEdge = DynamicGraph<EdgeData>::InputEdge;
 	using StaticEdge = StaticGraph<EdgeData>::InputEdge;
 
-	explicit CHPreprocess();
-	CHPreprocess(const CHPreprocess &) = delete;
-	~CHPreprocess();
+	explicit DCAPPreprocess();
+	DCAPPreprocess(const DCAPPreprocess &) = delete;
+	~DCAPPreprocess();
 
 	int Run(int argc, char *argv[]);
 

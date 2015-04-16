@@ -41,47 +41,47 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct DescriptorTable : public std::unordered_map<std::string, unsigned>
 {
-    unsigned get_id(const std::string &key)
-    {
-        auto iter = find(key);
-        if (iter != end())
-        {
-            return iter->second;
-        }
-        return 0;
-    }
+	unsigned get_id(const std::string &key)
+	{
+		auto iter = find(key);
+		if (iter != end())
+		{
+			return iter->second;
+		}
+		return 0;
+	}
 };
 
 
 struct DescriptorConfig
 {
-    DescriptorConfig() : instructions(true), geometry(true), encode_geometry(true), zoom_level(18)
-    {
-    }
+	DescriptorConfig() : instructions(true), geometry(true), encode_geometry(true), zoom_level(18)
+	{
+	}
 
-    template<class OtherT>
-    DescriptorConfig(const OtherT &other) : instructions(other.print_instructions),
-                                            geometry(other.geometry),
-                                            encode_geometry(other.compression),
-                                            zoom_level(other.zoom_level)
-    {
-        BOOST_ASSERT(zoom_level >= 0);
-    }
+	template<class OtherT>
+	DescriptorConfig(const OtherT &other) : instructions(other.print_instructions),
+		geometry(other.geometry),
+		encode_geometry(other.compression),
+		zoom_level(other.zoom_level)
+	{
+		BOOST_ASSERT(zoom_level >= 0);
+	}
 
-    bool instructions;
-    bool geometry;
-    bool encode_geometry;
-    short zoom_level;
+	bool instructions;
+	bool geometry;
+	bool encode_geometry;
+	short zoom_level;
 };
 
 template <class DataFacadeT> class BaseDescriptor
 {
-  public:
-    BaseDescriptor() {}
-    // Maybe someone can explain the pure virtual destructor thing to me (dennis)
-    virtual ~BaseDescriptor() {}
-    virtual void Run(const RawRouteData &raw_route, http::Reply &reply) = 0;
-    virtual void SetConfig(const DescriptorConfig &config) = 0;
+public:
+	BaseDescriptor() {}
+	// Maybe someone can explain the pure virtual destructor thing to me (dennis)
+	virtual ~BaseDescriptor() {}
+	virtual void Run(const RawRouteData &raw_route, http::Reply &reply) = 0;
+	virtual void SetConfig(const DescriptorConfig &config) = 0;
 };
 
 #endif // DESCRIPTOR_BASE_HPP

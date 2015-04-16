@@ -38,70 +38,70 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class HelloWorldPlugin final : public BasePlugin
 {
-  private:
-    std::string temp_string;
+private:
+	std::string temp_string;
 
-  public:
-    HelloWorldPlugin() : descriptor_string("hello") {}
-    virtual ~HelloWorldPlugin() {}
-    const std::string GetDescriptor() const final { return descriptor_string; }
+public:
+	HelloWorldPlugin() : descriptor_string("hello") {}
+	virtual ~HelloWorldPlugin() {}
+	const std::string GetDescriptor() const final { return descriptor_string; }
 
-    void HandleRequest(const RouteParameters &routeParameters, http::Reply &reply) final
-    {
-        reply.status = http::Reply::ok;
+	void HandleRequest(const RouteParameters &routeParameters, http::Reply &reply) final
+	{
+		reply.status = http::Reply::ok;
 
-        JSON::Object json_result;
-        std::string temp_string;
-        json_result.values["title"] = "Hello World";
+		JSON::Object json_result;
+		std::string temp_string;
+		json_result.values["title"] = "Hello World";
 
-        temp_string = cast::integral_to_string(routeParameters.zoom_level);
-        json_result.values["zoom_level"] = temp_string;
+		temp_string = cast::integral_to_string(routeParameters.zoom_level);
+		json_result.values["zoom_level"] = temp_string;
 
-        temp_string = cast::integral_to_string(routeParameters.check_sum);
-        json_result.values["check_sum"] = temp_string;
-        json_result.values["instructions"] = (routeParameters.print_instructions ? "yes" : "no");
-        json_result.values["geometry"] = (routeParameters.geometry ? "yes" : "no");
-        json_result.values["compression"] = (routeParameters.compression ? "yes" : "no");
-        json_result.values["output_format"] =
-            (!routeParameters.output_format.empty() ? "yes" : "no");
+		temp_string = cast::integral_to_string(routeParameters.check_sum);
+		json_result.values["check_sum"] = temp_string;
+		json_result.values["instructions"] = (routeParameters.print_instructions ? "yes" : "no");
+		json_result.values["geometry"] = (routeParameters.geometry ? "yes" : "no");
+		json_result.values["compression"] = (routeParameters.compression ? "yes" : "no");
+		json_result.values["output_format"] =
+				(!routeParameters.output_format.empty() ? "yes" : "no");
 
-        json_result.values["jsonp_parameter"] =
-            (!routeParameters.jsonp_parameter.empty() ? "yes" : "no");
-        json_result.values["language"] = (!routeParameters.language.empty() ? "yes" : "no");
+		json_result.values["jsonp_parameter"] =
+				(!routeParameters.jsonp_parameter.empty() ? "yes" : "no");
+		json_result.values["language"] = (!routeParameters.language.empty() ? "yes" : "no");
 
-        temp_string = cast::integral_to_string(routeParameters.coordinates.size());
-        json_result.values["location_count"] = temp_string;
+		temp_string = cast::integral_to_string(routeParameters.coordinates.size());
+		json_result.values["location_count"] = temp_string;
 
-        JSON::Array json_locations;
-        unsigned counter = 0;
-        for (const FixedPointCoordinate &coordinate : routeParameters.coordinates)
-        {
-            JSON::Object json_location;
-            JSON::Array json_coordinates;
+		JSON::Array json_locations;
+		unsigned counter = 0;
+		for (const FixedPointCoordinate &coordinate : routeParameters.coordinates)
+		{
+			JSON::Object json_location;
+			JSON::Array json_coordinates;
 
-            json_coordinates.values.push_back(static_cast<double>(coordinate.lat / COORDINATE_PRECISION));
-            json_coordinates.values.push_back(static_cast<double>(coordinate.lon / COORDINATE_PRECISION));
-            json_location.values[cast::integral_to_string(counter)] = json_coordinates;
-            json_locations.values.push_back(json_location);
-            ++counter;
-        }
-        json_result.values["locations"] = json_locations;
-        json_result.values["hint_count"] = routeParameters.hints.size();
+			json_coordinates.values.push_back(static_cast<double>(coordinate.lat / COORDINATE_PRECISION));
+			json_coordinates.values.push_back(static_cast<double>(coordinate.lon / COORDINATE_PRECISION));
+			json_location.values[cast::integral_to_string(counter)] = json_coordinates;
+			json_locations.values.push_back(json_location);
+			++counter;
+		}
+		json_result.values["locations"] = json_locations;
+		json_result.values["hint_count"] = routeParameters.hints.size();
 
-        JSON::Array json_hints;
-        counter = 0;
-        for (const std::string &current_hint : routeParameters.hints)
-        {
-            json_hints.values.push_back(current_hint);
-            ++counter;
-        }
-        json_result.values["hints"] = json_hints;
+		JSON::Array json_hints;
+		counter = 0;
+		for (const std::string &current_hint : routeParameters.hints)
+		{
+			json_hints.values.push_back(current_hint);
+			++counter;
+		}
+		json_result.values["hints"] = json_hints;
 
-        JSON::render(reply.content, json_result);
-    }
+		JSON::render(reply.content, json_result);
+	}
 
-  private:
-    std::string descriptor_string;
+private:
+	std::string descriptor_string;
 };
 
 #endif // HELLO_WORLD_PLUGIN_H

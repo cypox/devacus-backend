@@ -25,7 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "ch.hpp"
+#include "dcap.hpp"
 
 #include "../expander/processing_chain.hpp"
 
@@ -60,11 +60,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 
 
-CHPreprocess::CHPreprocess() : requested_num_threads(1) {}
+DCAPPreprocess::DCAPPreprocess() : requested_num_threads(1) {}
 
-CHPreprocess::~CHPreprocess() {}
+DCAPPreprocess::~DCAPPreprocess() {}
 
-int CHPreprocess::Run(int argc, char *argv[])
+int DCAPPreprocess::Run(int argc, char *argv[])
 {
 	LogPolicy::GetInstance().Unmute();
 
@@ -284,7 +284,7 @@ int CHPreprocess::Run(int argc, char *argv[])
 	return 0;
 }
 
-bool CHPreprocess::ParseArguments(int argc, char *argv[])
+bool DCAPPreprocess::ParseArguments(int argc, char *argv[])
 {
 	// declare a group of options that will be allowed only on command line
 	boost::program_options::options_description generic_options("Options");
@@ -375,7 +375,7 @@ bool CHPreprocess::ParseArguments(int argc, char *argv[])
 	return true;
 }
 
-void CHPreprocess::CheckRestrictionsFile(FingerPrint &fingerprint_orig)
+void DCAPPreprocess::CheckRestrictionsFile(FingerPrint &fingerprint_orig)
 {
 	boost::filesystem::ifstream restriction_stream(restrictions_path, std::ios::binary);
 	FingerPrint fingerprint_loaded;

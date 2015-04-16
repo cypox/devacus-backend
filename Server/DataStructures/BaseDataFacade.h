@@ -48,79 +48,79 @@ typedef osrm::range<EdgeID> EdgeRange;
 template <class EdgeDataT> class BaseDataFacade
 {
   public:
-    typedef EdgeBasedNode RTreeLeaf;
-    typedef EdgeDataT EdgeData;
-    BaseDataFacade() {}
-    virtual ~BaseDataFacade() {}
+	typedef EdgeBasedNode RTreeLeaf;
+	typedef EdgeDataT EdgeData;
+	BaseDataFacade() {}
+	virtual ~BaseDataFacade() {}
 
-    // search graph access
-    virtual unsigned GetNumberOfNodes() const = 0;
+	// search graph access
+	virtual unsigned GetNumberOfNodes() const = 0;
 
-    virtual unsigned GetNumberOfEdges() const = 0;
+	virtual unsigned GetNumberOfEdges() const = 0;
 
-    virtual unsigned GetOutDegree(const NodeID n) const = 0;
+	virtual unsigned GetOutDegree(const NodeID n) const = 0;
 
-    virtual NodeID GetTarget(const EdgeID e) const = 0;
+	virtual NodeID GetTarget(const EdgeID e) const = 0;
 
-    // virtual EdgeDataT &GetEdgeData(const EdgeID e) = 0;
+	// virtual EdgeDataT &GetEdgeData(const EdgeID e) = 0;
 
-    virtual const EdgeDataT &GetEdgeData(const EdgeID e) const = 0;
+	virtual const EdgeDataT &GetEdgeData(const EdgeID e) const = 0;
 
-    virtual EdgeID BeginEdges(const NodeID n) const = 0;
+	virtual EdgeID BeginEdges(const NodeID n) const = 0;
 
-    virtual EdgeID EndEdges(const NodeID n) const = 0;
+	virtual EdgeID EndEdges(const NodeID n) const = 0;
 
-    virtual EdgeRange GetAdjacentEdgeRange(const NodeID node) const = 0;
+	virtual EdgeRange GetAdjacentEdgeRange(const NodeID node) const = 0;
 
-    // searches for a specific edge
-    virtual EdgeID FindEdge(const NodeID from, const NodeID to) const = 0;
+	// searches for a specific edge
+	virtual EdgeID FindEdge(const NodeID from, const NodeID to) const = 0;
 
-    virtual EdgeID FindEdgeInEitherDirection(const NodeID from, const NodeID to) const = 0;
+	virtual EdgeID FindEdgeInEitherDirection(const NodeID from, const NodeID to) const = 0;
 
-    virtual EdgeID
-    FindEdgeIndicateIfReverse(const NodeID from, const NodeID to, bool &result) const = 0;
+	virtual EdgeID
+	FindEdgeIndicateIfReverse(const NodeID from, const NodeID to, bool &result) const = 0;
 
-    // node and edge information access
-    virtual FixedPointCoordinate GetCoordinateOfNode(const unsigned id) const = 0;
+	// node and edge information access
+	virtual FixedPointCoordinate GetCoordinateOfNode(const unsigned id) const = 0;
 
-    virtual bool EdgeIsCompressed(const unsigned id) const = 0;
+	virtual bool EdgeIsCompressed(const unsigned id) const = 0;
 
-    virtual unsigned GetGeometryIndexForEdgeID(const unsigned id) const = 0;
+	virtual unsigned GetGeometryIndexForEdgeID(const unsigned id) const = 0;
 
-    virtual void GetUncompressedGeometry(const unsigned id,
-                                         std::vector<unsigned> &result_nodes) const = 0;
+	virtual void GetUncompressedGeometry(const unsigned id,
+										 std::vector<unsigned> &result_nodes) const = 0;
 
-    virtual TurnInstruction GetTurnInstructionForEdgeID(const unsigned id) const = 0;
+	virtual TurnInstruction GetTurnInstructionForEdgeID(const unsigned id) const = 0;
 
-    virtual TravelMode GetTravelModeForEdgeID(const unsigned id) const = 0;
+	virtual TravelMode GetTravelModeForEdgeID(const unsigned id) const = 0;
 
-    virtual bool LocateClosestEndPointForCoordinate(const FixedPointCoordinate &input_coordinate,
-                                                    FixedPointCoordinate &result,
-                                                    const unsigned zoom_level = 18) = 0;
+	virtual bool LocateClosestEndPointForCoordinate(const FixedPointCoordinate &input_coordinate,
+													FixedPointCoordinate &result,
+													const unsigned zoom_level = 18) = 0;
 
-    virtual bool
-    IncrementalFindPhantomNodeForCoordinate(const FixedPointCoordinate &input_coordinate,
-                                            std::vector<PhantomNode> &resulting_phantom_node_vector,
-                                            const unsigned number_of_results) = 0;
+	virtual bool
+	IncrementalFindPhantomNodeForCoordinate(const FixedPointCoordinate &input_coordinate,
+											std::vector<PhantomNode> &resulting_phantom_node_vector,
+											const unsigned number_of_results) = 0;
 
-    virtual bool
-    IncrementalFindPhantomNodeForCoordinate(const FixedPointCoordinate &input_coordinate,
-                                            PhantomNode &resulting_phantom_node) = 0;
+	virtual bool
+	IncrementalFindPhantomNodeForCoordinate(const FixedPointCoordinate &input_coordinate,
+											PhantomNode &resulting_phantom_node) = 0;
 
-    virtual unsigned GetCheckSum() const = 0;
+	virtual unsigned GetCheckSum() const = 0;
 
-    virtual unsigned GetNameIndexFromEdgeID(const unsigned id) const = 0;
+	virtual unsigned GetNameIndexFromEdgeID(const unsigned id) const = 0;
 
-    virtual void GetName(const unsigned name_id, std::string &result) const = 0;
+	virtual void GetName(const unsigned name_id, std::string &result) const = 0;
 
-    std::string GetEscapedNameForNameID(const unsigned name_id) const
-    {
-        std::string temporary_string;
-        GetName(name_id, temporary_string);
-        return EscapeJSONString(temporary_string);
-    }
+	std::string GetEscapedNameForNameID(const unsigned name_id) const
+	{
+		std::string temporary_string;
+		GetName(name_id, temporary_string);
+		return EscapeJSONString(temporary_string);
+	}
 
-    virtual std::string GetTimestamp() const = 0;
+	virtual std::string GetTimestamp() const = 0;
 };
 
 #endif // BASE_DATA_FACADE_H
