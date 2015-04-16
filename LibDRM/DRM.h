@@ -25,28 +25,30 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef TYPEDEFS_H
-#define TYPEDEFS_H
+#ifndef DRM_H
+#define DRM_H
 
-#include <limits>
+#include <osrm/ServerPaths.h>
 
-// Necessary workaround for Windows as VS doesn't implement C99
-#ifdef _MSC_VER
-#define WIN32_LEAN_AND_MEAN
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-#endif
+#include <memory>
 
-using NodeID = unsigned int;
-using EdgeID = unsigned int;
-using AreaID = unsigned int;
-using EdgeWeight = int;
+class DRM_impl;
+struct RouteParameters;
 
-static const NodeID SPECIAL_NODEID = std::numeric_limits<unsigned>::max();
-static const EdgeID SPECIAL_EDGEID = std::numeric_limits<unsigned>::max();
-static const AreaID SPECIAL_AREAID = std::numeric_limits<unsigned>::max();
-static const unsigned INVALID_NAMEID = std::numeric_limits<unsigned>::max();
-static const EdgeWeight INVALID_EDGE_WEIGHT = std::numeric_limits<int>::max();
+namespace http
+{
+class Reply;
+}
 
-#endif /* TYPEDEFS_H */
+class DRM
+{
+private:
+	std::unique_ptr<DRM_impl> DRM_pimpl_;
+
+public:
+	explicit DRM(ServerPaths paths);
+	~DRM();
+	void RunQuery(RouteParameters &route_parameters, http::Reply &reply);
+};
+
+#endif // DRM_H

@@ -78,4 +78,54 @@ struct QueryEdge
 	}
 };
 
+struct QueryEdgeWithArea
+{
+	NodeID source;
+	NodeID target;
+	struct EdgeData
+	{
+		EdgeData() : id(0), area(0), shortcut(false), distance(0), forward(false), backward(false) {}
+
+		template <class OtherT> EdgeData(const OtherT &other)
+		{
+			distance = other.distance;
+			shortcut = other.shortcut;
+			id = other.id;
+			area = other.area;
+			forward = other.forward;
+			backward = other.backward;
+		}
+		NodeID id : 31;
+		AreaID area : 31;
+		bool shortcut : 1;
+		int distance : 30;
+		bool forward : 1;
+		bool backward : 1;
+	} data;
+
+	QueryEdgeWithArea() : source(SPECIAL_NODEID), target(SPECIAL_NODEID) {}
+
+	QueryEdgeWithArea(NodeID source, NodeID target, EdgeData data)
+		: source(source), target(target), data(data)
+	{
+	}
+
+	bool operator<(const QueryEdgeWithArea &right) const
+	{
+		if (source != right.source)
+		{
+			return source < right.source;
+		}
+		return target < right.target;
+	}
+
+	bool operator==(const QueryEdgeWithArea &right) const
+	{
+		return (source == right.source && target == right.target &&
+				data.distance == right.data.distance && data.shortcut == right.data.shortcut &&
+				data.forward == right.data.forward && data.backward == right.data.backward &&
+				data.id == right.data.id && data.area == right.data.area);
+	}
+};
+
 #endif /* QUERYEDGE_HPP_ */

@@ -25,28 +25,36 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef TYPEDEFS_H
-#define TYPEDEFS_H
+#ifndef SHARED_BARRIER_H
+#define SHARED_BARRIER_H
 
-#include <limits>
+#include <boost/interprocess/sync/named_mutex.hpp>
+#include <boost/interprocess/sync/named_condition.hpp>
 
-// Necessary workaround for Windows as VS doesn't implement C99
-#ifdef _MSC_VER
-#define WIN32_LEAN_AND_MEAN
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-#endif
+struct SharedBarriers
+{
 
-using NodeID = unsigned int;
-using EdgeID = unsigned int;
-using AreaID = unsigned int;
-using EdgeWeight = int;
+    SharedBarriers()
+        : pending_update_mutex(boost::interprocess::open_or_create, "pending_update"),
+          update_mutex(boost::interprocess::open_or_create, "update"),
+          query_mutex(boost::interprocess::open_or_create, "query"),
+          no_running_queries_condition(boost::interprocess::open_or_create, "no_running_queries"),
+          update_ongoing(false), number_of_queries(0)
+    {
+    }
 
-static const NodeID SPECIAL_NODEID = std::numeric_limits<unsigned>::max();
-static const EdgeID SPECIAL_EDGEID = std::numeric_limits<unsigned>::max();
-static const AreaID SPECIAL_AREAID = std::numeric_limits<unsigned>::max();
-static const unsigned INVALID_NAMEID = std::numeric_limits<unsigned>::max();
-static const EdgeWeight INVALID_EDGE_WEIGHT = std::numeric_limits<int>::max();
+    // Mutex to protect access to the boolean variable
+    boost::interprocess::named_mutex pending_update_mutex;
+    boost::interprocess::named_mutex update_mutex;
+    boost::interprocess::named_mutex query_mutex;
 
-#endif /* TYPEDEFS_H */
+    // Condition that no update is running
+    boost::interprocess::named_condition no_running_queries_condition;
+
+    // Is there an ongoing update?
+    bool update_ongoing;
+    // Is there any query?
+    int number_of_queries;
+};
+
+#endif // SHARED_BARRIER_H
